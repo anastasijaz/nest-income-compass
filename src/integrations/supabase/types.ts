@@ -14,13 +14,272 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      fixes: {
+        Row: {
+          actual_cost: number | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          estimated_cost: number | null
+          id: string
+          photo_path: string | null
+          priority: string
+          property_id: string
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          photo_path?: string | null
+          priority?: string
+          property_id: string
+          status?: string
+          title: string
+          user_id?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          photo_path?: string | null
+          priority?: string
+          property_id?: string
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fixes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      properties: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          monthly_rent: number
+          name: string
+          photo_path: string | null
+          property_type: string
+          tenants: number
+          user_id: string
+        }
+        Insert: {
+          address?: string
+          created_at?: string
+          id?: string
+          monthly_rent?: number
+          name: string
+          photo_path?: string | null
+          property_type?: string
+          tenants?: number
+          user_id?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          monthly_rent?: number
+          name?: string
+          photo_path?: string | null
+          property_type?: string
+          tenants?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recurring_rents: {
+        Row: {
+          active: boolean
+          amount: number
+          created_at: string
+          day_of_month: number
+          id: string
+          note: string | null
+          property_id: string
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          created_at?: string
+          day_of_month?: number
+          id?: string
+          note?: string | null
+          property_id: string
+          start_date: string
+          user_id?: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          created_at?: string
+          day_of_month?: number
+          id?: string
+          note?: string | null
+          property_id?: string
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_rents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      taxes: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          label: string | null
+          paid_at: string | null
+          property_id: string
+          status: string
+          tax_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          id?: string
+          label?: string | null
+          paid_at?: string | null
+          property_id: string
+          status?: string
+          tax_type?: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          label?: string | null
+          paid_at?: string | null
+          property_id?: string
+          status?: string
+          tax_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          fix_id: string | null
+          id: string
+          kind: string
+          note: string | null
+          property_id: string
+          receipt_path: string | null
+          recurring_id: string | null
+          tax_id: string | null
+          user_id: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date?: string
+          fix_id?: string | null
+          id?: string
+          kind: string
+          note?: string | null
+          property_id: string
+          receipt_path?: string | null
+          recurring_id?: string | null
+          tax_id?: string | null
+          user_id?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          fix_id?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          property_id?: string
+          receipt_path?: string | null
+          recurring_id?: string | null
+          tax_id?: string | null
+          user_id?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_fix_id_fkey"
+            columns: ["fix_id"]
+            isOneToOne: false
+            referencedRelation: "fixes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_recurring_id_fkey"
+            columns: ["recurring_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_rents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_tax_id_fkey"
+            columns: ["tax_id"]
+            isOneToOne: false
+            referencedRelation: "taxes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_recurring_rent: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never

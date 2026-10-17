@@ -11,7 +11,7 @@ import { useRefresh, type Tax } from "@/lib/queries";
 
 const num = (s: string) => Number(s.replace(/\./g, "").replace(",", "."));
 
-export function TaxSheet({ open, onOpenChange, propertyId, tax }: { open: boolean; onOpenChange: (o: boolean) => void; propertyId: string; tax?: Tax }) {
+export function TaxSheet({ open, onOpenChange, propertyId, tax }: { open: boolean; onOpenChange: (o: boolean) => void; propertyId: string; tax?: Tax | undefined }) {
   const refresh = useRefresh();
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({ tax_type: "grundsteuer", label: "", amount: "", due_date: todayISO() });

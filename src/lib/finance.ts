@@ -11,8 +11,8 @@ export const todayISO = () => format(new Date(), "yyyy-MM-dd");
 export type PeriodKey = "month" | "3months" | "year" | "all" | "custom";
 export interface Period {
   key: PeriodKey;
-  from?: string;
-  to?: string;
+  from?: string | undefined;
+  to?: string | undefined;
 }
 export const PERIOD_LABELS: Record<PeriodKey, string> = {
   month: "This month",
@@ -23,7 +23,7 @@ export const PERIOD_LABELS: Record<PeriodKey, string> = {
 };
 
 /** Returns inclusive ISO date bounds; undefined bound = open. */
-export function periodRange(p: Period, now = new Date()): { from?: string; to?: string } {
+export function periodRange(p: Period, now = new Date()): { from?: string | undefined; to?: string | undefined } {
   const iso = (d: Date) => format(d, "yyyy-MM-dd");
   switch (p.key) {
     case "month":
@@ -39,7 +39,7 @@ export function periodRange(p: Period, now = new Date()): { from?: string; to?: 
   }
 }
 
-export function inRange(date: string, r: { from?: string; to?: string }) {
+export function inRange(date: string, r: { from?: string | undefined; to?: string | undefined }) {
   return (!r.from || date >= r.from) && (!r.to || date <= r.to);
 }
 

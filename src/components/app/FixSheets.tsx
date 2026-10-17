@@ -15,7 +15,7 @@ import { propertiesQuery, useRefresh, type Fix } from "@/lib/queries";
 const PRIORITIES = { low: "Low", medium: "Medium", high: "High" };
 const num = (s: string) => Number(s.replace(/\./g, "").replace(",", "."));
 
-export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolean; onOpenChange: (o: boolean) => void; propertyId?: string | undefined; fix?: Fix }) {
+export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolean; onOpenChange: (o: boolean) => void; propertyId?: string | undefined; fix?: Fix | undefined }) {
   const refresh = useRefresh();
   const { data: properties = [] } = useQuery(propertiesQuery);
   const [busy, setBusy] = useState(false);

@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Data access goes straight from the browser Supabase client with RLS (owner-only policies); only AI receipt parsing runs server-side (`src/lib/receipt.functions.ts`) because it needs the gateway key.
+- Recurring rent is materialized by the idempotent `generate_recurring_rent()` SQL function, called on each signed-in app load — no cron needed.
+- Uploaded images live in the private `files` bucket under `<user_id>/...` and are shown via signed URLs.

@@ -45,7 +45,7 @@ function AuthPage() {
   }
 
   return (
-    <div className="grid min-h-dvh md:grid-cols-2">
+    <div className="grid min-h-dvh grid-rows-[auto_1fr] md:grid-cols-2 md:grid-rows-1">
       <div className="relative h-48 overflow-hidden md:h-auto">
         <img src={hero} alt="" width={1024} height={1280} className="h-full w-full object-cover" />
       </div>

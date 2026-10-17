@@ -10,8 +10,8 @@ export function Photo({
 }: {
   path?: string | null;
   alt: string;
-  className?: string;
-  fallback?: ReactNode;
+  className?: string | undefined;
+  fallback?: ReactNode | undefined;
 }) {
   const { data } = useSignedUrl(path);
   if (!path || !data)

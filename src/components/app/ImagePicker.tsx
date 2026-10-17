@@ -14,7 +14,7 @@ export function ImagePicker({
   value: string | null;
   onChange: (path: string | null) => void;
   folder: string;
-  label?: string;
+  label?: string | undefined;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);

@@ -28,12 +28,12 @@ export function TaxSheet({ open, onOpenChange, propertyId, tax }: { open: boolea
 
   async function save() {
     const amount = num(f.amount);
-    if (!(amount > 0)) return toast.error("Enter an amount");
+    if (!(amount > 0)) return void toast.error("Enter an amount");
     setBusy(true);
     const row = { property_id: propertyId, tax_type: f.tax_type, label: f.label || null, amount, due_date: f.due_date };
     const { error } = tax ? await supabase.from("taxes").update(row).eq("id", tax.id) : await supabase.from("taxes").insert(row);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     refresh();
     onOpenChange(false);
   }
@@ -105,7 +105,7 @@ export function PayTaxSheet({ tax, onOpenChange }: { tax: Tax | null; onOpenChan
       if (r.error) toast.error(r.error.message);
     }
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     toast.success("Marked paid — cost recorded");
     refresh();
     onOpenChange(false);

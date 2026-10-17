@@ -38,7 +38,7 @@ export function PropertySheet({
   }, [open, property]);
 
   async function save() {
-    if (!f.name.trim()) return toast.error("Give the property a name");
+    if (!f.name.trim()) return void toast.error("Give the property a name");
     setBusy(true);
     const row = {
       name: f.name.trim(),
@@ -52,7 +52,7 @@ export function PropertySheet({
       ? await supabase.from("properties").update(row).eq("id", property.id)
       : await supabase.from("properties").insert(row);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     toast.success(property ? "Property updated" : "Property added");
     refresh();
     onOpenChange(false);
@@ -61,7 +61,7 @@ export function PropertySheet({
   async function remove() {
     if (!property || !confirm(`Delete ${property.name} and all its records?`)) return;
     const { error } = await supabase.from("properties").delete().eq("id", property.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     refresh();
     onOpenChange(false);
     navigate({ to: "/dashboard" });

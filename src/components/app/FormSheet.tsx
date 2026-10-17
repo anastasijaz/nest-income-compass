@@ -16,12 +16,12 @@ export function FormSheet({
   open: boolean;
   onOpenChange: (o: boolean) => void;
   title: string;
-  description?: string;
+  description?: string | undefined;
   children: ReactNode;
-  onSubmit: () => void | Promise<void>;
-  submitLabel?: string;
-  busy?: boolean;
-  extraActions?: ReactNode;
+  onSubmit: () => unknown;
+  submitLabel?: string | undefined;
+  busy?: boolean | undefined;
+  extraActions?: ReactNode | undefined;
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

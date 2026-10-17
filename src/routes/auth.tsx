@@ -33,12 +33,12 @@ function AuthPage() {
     if (mode === "in") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setBusy(false);
-      if (error) return toast.error(error.message);
+      if (error) return void toast.error(error.message);
       navigate({ to: "/dashboard" });
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
       setBusy(false);
-      if (error) return toast.error(error.message);
+      if (error) return void toast.error(error.message);
       if (data.session) navigate({ to: "/dashboard" });
       else setSent(true);
     }

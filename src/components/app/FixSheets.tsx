@@ -15,7 +15,7 @@ import { propertiesQuery, useRefresh, type Fix } from "@/lib/queries";
 const PRIORITIES = { low: "Low", medium: "Medium", high: "High" };
 const num = (s: string) => Number(s.replace(/\./g, "").replace(",", "."));
 
-export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolean; onOpenChange: (o: boolean) => void; propertyId?: string; fix?: Fix }) {
+export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolean; onOpenChange: (o: boolean) => void; propertyId?: string | undefined; fix?: Fix }) {
   const refresh = useRefresh();
   const { data: properties = [] } = useQuery(propertiesQuery);
   const [busy, setBusy] = useState(false);
@@ -35,8 +35,8 @@ export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolea
   }, [open, fix, propertyId]);
 
   async function save() {
-    if (!f.title.trim()) return toast.error("Add a title");
-    if (!f.property_id) return toast.error("Choose a property");
+    if (!f.title.trim()) return void toast.error("Add a title");
+    if (!f.property_id) return void toast.error("Choose a property");
     setBusy(true);
     const row = {
       property_id: f.property_id,
@@ -48,7 +48,7 @@ export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolea
     };
     const { error } = fix ? await supabase.from("fixes").update(row).eq("id", fix.id) : await supabase.from("fixes").insert(row);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     refresh();
     onOpenChange(false);
   }
@@ -119,7 +119,7 @@ export function CompleteFixSheet({ fix, onOpenChange }: { fix: Fix | null; onOpe
   async function save() {
     if (!fix) return;
     const amount = num(cost);
-    if (!(amount >= 0) || cost === "") return toast.error("Enter the actual cost");
+    if (!(amount >= 0) || cost === "") return void toast.error("Enter the actual cost");
     setBusy(true);
     const { error } = await supabase.from("fixes").update({ status: "done", actual_cost: amount, completed_at: date }).eq("id", fix.id);
     if (!error && amount > 0) {
@@ -136,7 +136,7 @@ export function CompleteFixSheet({ fix, onOpenChange }: { fix: Fix | null; onOpe
       if (r.error) toast.error(r.error.message);
     }
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     toast.success("Fix done — cost recorded");
     refresh();
     onOpenChange(false);

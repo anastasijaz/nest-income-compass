@@ -13,7 +13,7 @@ export function QuickAdd({ propertyId }: { propertyId?: string }) {
   const { data: properties = [] } = useQuery(propertiesQuery);
   const [mode, setMode] = useState<Mode>(null);
   const pick = (m: Mode) => () => {
-    if (!properties.length) return toast("Add a property first");
+    if (!properties.length) return void toast("Add a property first");
     setMode(m);
   };
   const item = "h-12 gap-3 rounded-lg px-3 text-base";

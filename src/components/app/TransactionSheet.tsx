@@ -29,9 +29,9 @@ export function TransactionSheet({
   open: boolean;
   onOpenChange: (o: boolean) => void;
   kind: TxnKind;
-  propertyId?: string;
-  txn?: Transaction;
-  startScan?: boolean;
+  propertyId?: string | undefined;
+  txn?: Transaction | undefined;
+  startScan?: boolean | undefined;
 }) {
   const refresh = useRefresh();
   const scan = useServerFn(parseReceipt);
@@ -94,8 +94,8 @@ export function TransactionSheet({
 
   async function save() {
     const amount = Number(f.amount.replace(/\./g, "").replace(",", "."));
-    if (!f.property_id) return toast.error("Choose a property");
-    if (!(amount > 0)) return toast.error("Enter an amount");
+    if (!f.property_id) return void toast.error("Choose a property");
+    if (!(amount > 0)) return void toast.error("Enter an amount");
     setBusy(true);
     let error;
     if (!txn && kind === "income" && f.category === "rent" && f.recurring) {
@@ -124,7 +124,7 @@ export function TransactionSheet({
         : await supabase.from("transactions").insert(row));
     }
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     toast.success(txn ? "Saved" : kind === "income" ? "Income added" : "Cost added");
     refresh();
     onOpenChange(false);
@@ -136,7 +136,7 @@ export function TransactionSheet({
       await supabase.from("recurring_rents").update({ active: false }).eq("id", txn.recurring_id);
     }
     const { error } = await supabase.from("transactions").delete().eq("id", txn.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     refresh();
     onOpenChange(false);
   }

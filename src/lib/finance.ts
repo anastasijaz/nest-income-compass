@@ -1,0 +1,124 @@
+import { format, startOfMonth, subMonths, startOfYear, parseISO, addMonths } from "date-fns";
+
+const eur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
+/** Formats as 1.234,56 € */
+export function formatEUR(n: number) {
+  return eur.format(Number.isFinite(n) ? n : 0);
+}
+
+export const todayISO = () => format(new Date(), "yyyy-MM-dd");
+
+export type PeriodKey = "month" | "3months" | "year" | "all" | "custom";
+export interface Period {
+  key: PeriodKey;
+  from?: string;
+  to?: string;
+}
+export const PERIOD_LABELS: Record<PeriodKey, string> = {
+  month: "This month",
+  "3months": "Last 3 months",
+  year: "This year",
+  all: "All time",
+  custom: "Custom",
+};
+
+/** Returns inclusive ISO date bounds; undefined bound = open. */
+export function periodRange(p: Period, now = new Date()): { from?: string; to?: string } {
+  const iso = (d: Date) => format(d, "yyyy-MM-dd");
+  switch (p.key) {
+    case "month":
+      return { from: iso(startOfMonth(now)), to: iso(now) };
+    case "3months":
+      return { from: iso(startOfMonth(subMonths(now, 2))), to: iso(now) };
+    case "year":
+      return { from: iso(startOfYear(now)), to: iso(now) };
+    case "all":
+      return {};
+    case "custom":
+      return { from: p.from || undefined, to: p.to || undefined };
+  }
+}
+
+export function inRange(date: string, r: { from?: string; to?: string }) {
+  return (!r.from || date >= r.from) && (!r.to || date <= r.to);
+}
+
+export interface Txn {
+  kind: string;
+  amount: number;
+  date: string;
+}
+
+export function summarize(txns: Txn[]) {
+  let income = 0;
+  let costs = 0;
+  for (const t of txns) {
+    if (t.kind === "income") income += Number(t.amount);
+    else costs += Number(t.amount);
+  }
+  const net = income - costs;
+  const covering = income >= costs;
+  const coverage = costs === 0 ? (income > 0 ? 100 : 0) : Math.round((income / costs) * 100);
+  return { income, costs, net, covering, coverage };
+}
+
+export function monthlyBuckets(txns: Txn[], from: string, to: string) {
+  const out: { month: string; label: string; income: number; costs: number }[] = [];
+  let d = startOfMonth(parseISO(from));
+  const end = parseISO(to);
+  let guard = 0;
+  while (d <= end && guard++ < 240) {
+    const key = format(d, "yyyy-MM");
+    out.push({ month: key, label: format(d, "MMM yy"), income: 0, costs: 0 });
+    d = addMonths(d, 1);
+  }
+  const map = new Map(out.map((b) => [b.month, b]));
+  for (const t of txns) {
+    const b = map.get(t.date.slice(0, 7));
+    if (!b) continue;
+    if (t.kind === "income") b.income += Number(t.amount);
+    else b.costs += Number(t.amount);
+  }
+  return out;
+}
+
+export const INCOME_CATEGORIES = {
+  rent: "Rent",
+  deposit: "Deposit",
+  utility_reimbursement: "Utility reimbursement",
+  other: "Other",
+} as const;
+
+export const COST_CATEGORIES = {
+  repairs: "Repairs",
+  maintenance: "Maintenance",
+  utilities: "Utilities",
+  insurance: "Insurance",
+  property_tax: "Property tax",
+  mortgage: "Mortgage / loan",
+  management_fees: "Management fees",
+  other: "Other",
+} as const;
+
+export const PROPERTY_TYPES = {
+  apartment: "Apartment",
+  house: "House",
+  studio: "Studio",
+  commercial: "Commercial",
+  other: "Other",
+} as const;
+
+export const TAX_TYPES = {
+  grundsteuer: "Grundsteuer",
+  income_tax: "Income tax on rent",
+  other: "Other",
+} as const;
+
+export function categoryLabel(kind: string, cat: string) {
+  const map: Record<string, string> = kind === "income" ? INCOME_CATEGORIES : COST_CATEGORIES;
+  return map[cat] ?? cat;
+}
+
+export function isOverdue(t: { status: string; due_date: string }, today = todayISO()) {
+  return t.status !== "paid" && t.due_date < today;
+}

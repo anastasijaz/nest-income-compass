@@ -9,6 +9,6 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Data access goes straight from the browser Supabase client with RLS (owner-only policies); only AI receipt parsing runs server-side (`src/lib/receipt.functions.ts`) because it needs the gateway key.
+- Data access goes straight from the browser Supabase client with RLS scoped to the caller's shared group (`workspace_id = my_workspace_id()`; each user belongs to exactly one group, joined by invite code); only AI receipt parsing runs server-side (`src/lib/receipt.functions.ts`) because it needs the gateway key.
 - Recurring rent is materialized by the idempotent `generate_recurring_rent()` SQL function, called on each signed-in app load — no cron needed.
-- Uploaded images live in the private `files` bucket under `<user_id>/...` and are shown via signed URLs.
+- Uploaded images live in the private `files` bucket under `<user_id>/...` and are shown via signed URLs; members of the same group can read each other's folders.

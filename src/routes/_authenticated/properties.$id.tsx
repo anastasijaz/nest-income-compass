@@ -28,7 +28,7 @@ import {
   todayISO,
   type Period,
 } from "@/lib/finance";
-import { fixesQuery, propertiesQuery, taxesQuery, transactionsQuery, useRefresh, type Fix, type Tax, type Transaction } from "@/lib/queries";
+import { fixesQuery, memberName, membersQuery, propertiesQuery, taxesQuery, transactionsQuery, useRefresh, type Fix, type Tax, type Transaction } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/properties/$id")({
@@ -241,6 +241,7 @@ function FixesTab({ propertyId, fixes }: { propertyId: string; fixes: Fix[] }) {
   const refresh = useRefresh();
   const [edit, setEdit] = useState<{ fix?: Fix } | null>(null);
   const [complete, setComplete] = useState<Fix | null>(null);
+  const { data: members = [] } = useQuery(membersQuery);
   const sorted = [...fixes].sort((a, b) => (a.status === b.status ? 0 : a.status === "todo" ? -1 : 1));
   return (
     <>
@@ -260,6 +261,9 @@ function FixesTab({ propertyId, fixes }: { propertyId: string; fixes: Fix[] }) {
                   <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                     <span className={cn("rounded px-1.5 py-0.5 font-medium capitalize", PRIORITY_STYLE[f.priority])}>{f.priority}</span>
                     <span>{fmtDate(f.created_at.slice(0, 10))}</span>
+                    {f.status === "done"
+                      ? f.completed_by && <span>Done by {memberName(members, f.completed_by)}</span>
+                      : f.assigned_to && <span className="font-medium text-foreground">→ {memberName(members, f.assigned_to)}</span>}
                     {f.status === "done"
                       ? f.actual_cost != null && <span className="tabular">Paid {formatEUR(Number(f.actual_cost))}</span>
                       : f.estimated_cost != null && <span className="tabular">Est. {formatEUR(Number(f.estimated_cost))}</span>}

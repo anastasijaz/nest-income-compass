@@ -12,7 +12,7 @@ import { FormSheet } from "./FormSheet";
 import { Field, NativeSelect, inputLg } from "./fields";
 import { ImagePicker } from "./ImagePicker";
 import { COST_CATEGORIES, INCOME_CATEGORIES, todayISO } from "@/lib/finance";
-import { propertiesQuery, useRefresh, type Transaction } from "@/lib/queries";
+import { meQuery, membersQuery, propertiesQuery, useRefresh, type Transaction } from "@/lib/queries";
 import { blobToDataUrl, compressImage, uploadImage } from "@/lib/files";
 import { parseReceipt } from "@/lib/receipt.functions";
 
@@ -36,6 +36,8 @@ export function TransactionSheet({
   const refresh = useRefresh();
   const scan = useServerFn(parseReceipt);
   const { data: properties = [] } = useQuery(propertiesQuery);
+  const { data: members = [] } = useQuery(membersQuery);
+  const { data: me = "" } = useQuery(meQuery);
   const scanRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -49,6 +51,7 @@ export function TransactionSheet({
     note: "",
     receipt_path: null as string | null,
     recurring: false,
+    paid_by: "",
   });
 
   useEffect(() => {
@@ -63,10 +66,11 @@ export function TransactionSheet({
       note: txn?.note ?? "",
       receipt_path: txn?.receipt_path ?? null,
       recurring: false,
+      paid_by: txn ? (txn.paid_by ?? "") : me,
     });
     if (startScan) setTimeout(() => scanRef.current?.click(), 150);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, txn, kind, propertyId]);
+  }, [open, txn, kind, propertyId, me]);
 
   async function onScan(file: File) {
     setScanning(true);
@@ -118,6 +122,7 @@ export function TransactionSheet({
         vendor: kind === "cost" ? f.vendor || null : null,
         note: f.note || null,
         receipt_path: f.receipt_path,
+        paid_by: kind === "cost" ? f.paid_by || null : null,
       };
       ({ error } = txn
         ? await supabase.from("transactions").update(row).eq("id", txn.id)
@@ -210,6 +215,15 @@ export function TransactionSheet({
       {isCost && (
         <Field label="Vendor">
           <Input className={inputLg} value={f.vendor} onChange={(e) => setF({ ...f, vendor: e.target.value })} placeholder="Who did you pay?" />
+        </Field>
+      )}
+      {isCost && (
+        <Field label="Paid by">
+          <NativeSelect
+            options={[["", "Not set"], ...members.map((m) => [m.user_id, m.display_name || "Member"] as [string, string])]}
+            value={f.paid_by}
+            onChange={(e) => setF({ ...f, paid_by: e.target.value })}
+          />
         </Field>
       )}
       <Field label="Note">

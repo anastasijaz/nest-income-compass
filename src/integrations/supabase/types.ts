@@ -17,7 +17,9 @@ export type Database = {
       fixes: {
         Row: {
           actual_cost: number | null
+          assigned_to: string | null
           completed_at: string | null
+          completed_by: string | null
           created_at: string
           description: string | null
           estimated_cost: number | null
@@ -28,10 +30,13 @@ export type Database = {
           status: string
           title: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           actual_cost?: number | null
+          assigned_to?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           description?: string | null
           estimated_cost?: number | null
@@ -42,10 +47,13 @@ export type Database = {
           status?: string
           title: string
           user_id?: string
+          workspace_id?: string | null
         }
         Update: {
           actual_cost?: number | null
+          assigned_to?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           description?: string | null
           estimated_cost?: number | null
@@ -56,6 +64,7 @@ export type Database = {
           status?: string
           title?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -78,6 +87,7 @@ export type Database = {
           property_type: string
           tenants: number
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           address?: string
@@ -89,6 +99,7 @@ export type Database = {
           property_type?: string
           tenants?: number
           user_id?: string
+          workspace_id?: string | null
         }
         Update: {
           address?: string
@@ -100,6 +111,7 @@ export type Database = {
           property_type?: string
           tenants?: number
           user_id?: string
+          workspace_id?: string | null
         }
         Relationships: []
       }
@@ -114,6 +126,7 @@ export type Database = {
           property_id: string
           start_date: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           active?: boolean
@@ -125,6 +138,7 @@ export type Database = {
           property_id: string
           start_date: string
           user_id?: string
+          workspace_id?: string | null
         }
         Update: {
           active?: boolean
@@ -136,6 +150,7 @@ export type Database = {
           property_id?: string
           start_date?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -159,6 +174,7 @@ export type Database = {
           status: string
           tax_type: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           amount: number
@@ -171,6 +187,7 @@ export type Database = {
           status?: string
           tax_type?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Update: {
           amount?: number
@@ -183,6 +200,7 @@ export type Database = {
           status?: string
           tax_type?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -204,12 +222,14 @@ export type Database = {
           id: string
           kind: string
           note: string | null
+          paid_by: string | null
           property_id: string
           receipt_path: string | null
           recurring_id: string | null
           tax_id: string | null
           user_id: string
           vendor: string | null
+          workspace_id: string | null
         }
         Insert: {
           amount: number
@@ -220,12 +240,14 @@ export type Database = {
           id?: string
           kind: string
           note?: string | null
+          paid_by?: string | null
           property_id: string
           receipt_path?: string | null
           recurring_id?: string | null
           tax_id?: string | null
           user_id?: string
           vendor?: string | null
+          workspace_id?: string | null
         }
         Update: {
           amount?: number
@@ -236,12 +258,14 @@ export type Database = {
           id?: string
           kind?: string
           note?: string | null
+          paid_by?: string | null
           property_id?: string
           receipt_path?: string | null
           recurring_id?: string | null
           tax_id?: string | null
           user_id?: string
           vendor?: string | null
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -274,12 +298,104 @@ export type Database = {
           },
         ]
       }
+      visits: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          property_id: string
+          start_date: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          property_id: string
+          start_date: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          property_id?: string
+          start_date?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visits_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_members: {
+        Row: {
+          display_name: string
+          joined_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          display_name?: string
+          joined_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          display_name?: string
+          joined_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspaces: {
+        Row: {
+          created_at: string
+          id: string
+          invite_code: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invite_code?: string
+          name?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invite_code?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      ensure_workspace: { Args: never; Returns: string }
       generate_recurring_rent: { Args: never; Returns: number }
+      join_workspace: { Args: { _code: string }; Returns: string }
+      my_workspace_id: { Args: never; Returns: string }
+      shares_workspace: { Args: { _folder: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

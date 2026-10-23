@@ -10,7 +10,7 @@ import { FormSheet } from "./FormSheet";
 import { Field, NativeSelect, inputLg } from "./fields";
 import { ImagePicker } from "./ImagePicker";
 import { todayISO } from "@/lib/finance";
-import { propertiesQuery, useRefresh, type Fix } from "@/lib/queries";
+import { meQuery, membersQuery, propertiesQuery, useRefresh, type Fix } from "@/lib/queries";
 
 const PRIORITIES = { low: "Low", medium: "Medium", high: "High" };
 const num = (s: string) => Number(s.replace(/\./g, "").replace(",", "."));
@@ -18,12 +18,14 @@ const num = (s: string) => Number(s.replace(/\./g, "").replace(",", "."));
 export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolean; onOpenChange: (o: boolean) => void; propertyId?: string | undefined; fix?: Fix | undefined }) {
   const refresh = useRefresh();
   const { data: properties = [] } = useQuery(propertiesQuery);
+  const { data: members = [] } = useQuery(membersQuery);
   const [busy, setBusy] = useState(false);
-  const [f, setF] = useState({ property_id: "", title: "", description: "", priority: "medium", estimated_cost: "", photo_path: null as string | null });
+  const [f, setF] = useState({ assigned_to: "", property_id: "", title: "", description: "", priority: "medium", estimated_cost: "", photo_path: null as string | null });
 
   useEffect(() => {
     if (open)
       setF({
+        assigned_to: fix?.assigned_to ?? "",
         property_id: fix?.property_id ?? propertyId ?? properties[0]?.id ?? "",
         title: fix?.title ?? "",
         description: fix?.description ?? "",
@@ -45,6 +47,7 @@ export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolea
       priority: f.priority,
       estimated_cost: f.estimated_cost ? num(f.estimated_cost) : null,
       photo_path: f.photo_path,
+      assigned_to: f.assigned_to || null,
     };
     const { error } = fix ? await supabase.from("fixes").update(row).eq("id", fix.id) : await supabase.from("fixes").insert(row);
     setBusy(false);
@@ -94,6 +97,13 @@ export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolea
           <Input className={inputLg} inputMode="decimal" value={f.estimated_cost} onChange={(e) => setF({ ...f, estimated_cost: e.target.value })} placeholder="0,00" />
         </Field>
       </div>
+      <Field label="Assigned to">
+        <NativeSelect
+          options={[["", "Nobody yet"], ...members.map((m) => [m.user_id, m.display_name || "Member"] as [string, string])]}
+          value={f.assigned_to}
+          onChange={(e) => setF({ ...f, assigned_to: e.target.value })}
+        />
+      </Field>
       <Field label="Photo">
         <ImagePicker value={f.photo_path} onChange={(p) => setF({ ...f, photo_path: p })} folder="fixes" />
       </Field>
@@ -107,21 +117,27 @@ export function CompleteFixSheet({ fix, onOpenChange }: { fix: Fix | null; onOpe
   const [cost, setCost] = useState("");
   const [date, setDate] = useState(todayISO());
   const [receipt, setReceipt] = useState<string | null>(null);
+  const { data: members = [] } = useQuery(membersQuery);
+  const { data: me = "" } = useQuery(meQuery);
+  const [doneBy, setDoneBy] = useState("");
+  const [paidBy, setPaidBy] = useState("");
 
   useEffect(() => {
     if (fix) {
+      setDoneBy(me);
+      setPaidBy(me);
       setCost(fix.estimated_cost != null ? String(fix.estimated_cost).replace(".", ",") : "");
       setDate(todayISO());
       setReceipt(null);
     }
-  }, [fix]);
+  }, [fix, me]);
 
   async function save() {
     if (!fix) return;
     const amount = num(cost);
     if (!(amount >= 0) || cost === "") return void toast.error("Enter the actual cost");
     setBusy(true);
-    const { error } = await supabase.from("fixes").update({ status: "done", actual_cost: amount, completed_at: date }).eq("id", fix.id);
+    const { error } = await supabase.from("fixes").update({ status: "done", actual_cost: amount, completed_at: date, completed_by: doneBy || null }).eq("id", fix.id);
     if (!error && amount > 0) {
       const r = await supabase.from("transactions").insert({
         property_id: fix.property_id,
@@ -132,6 +148,7 @@ export function CompleteFixSheet({ fix, onOpenChange }: { fix: Fix | null; onOpe
         note: `Fix: ${fix.title}`,
         receipt_path: receipt,
         fix_id: fix.id,
+        paid_by: paidBy || null,
       });
       if (r.error) toast.error(r.error.message);
     }
@@ -152,6 +169,14 @@ export function CompleteFixSheet({ fix, onOpenChange }: { fix: Fix | null; onOpe
           <Input className={inputLg} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
       </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Done by">
+          <NativeSelect options={members.map((m) => [m.user_id, m.display_name || "Member"] as [string, string])} value={doneBy} onChange={(e) => setDoneBy(e.target.value)} />
+        </Field>
+        <Field label="Paid by">
+          <NativeSelect options={members.map((m) => [m.user_id, m.display_name || "Member"] as [string, string])} value={paidBy} onChange={(e) => setPaidBy(e.target.value)} />
+        </Field>
+      </div>
       <Field label="Receipt (optional)">
         <ImagePicker value={receipt} onChange={setReceipt} folder="receipts" label="Attach receipt" />
       </Field>
@@ -162,5 +187,5 @@ export function CompleteFixSheet({ fix, onOpenChange }: { fix: Fix | null; onOpe
 
 export async function reopenFix(fix: Fix) {
   await supabase.from("transactions").delete().eq("fix_id", fix.id);
-  return supabase.from("fixes").update({ status: "todo", actual_cost: null, completed_at: null }).eq("id", fix.id);
+  return supabase.from("fixes").update({ status: "todo", actual_cost: null, completed_at: null, completed_by: null }).eq("id", fix.id);
 }

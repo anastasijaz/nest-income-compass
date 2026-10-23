@@ -8,6 +8,8 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/auth" });
+    // Every user belongs to a shared group; create one on first visit.
+    await supabase.rpc("ensure_workspace");
     return { user: data.user };
   },
   component: AuthedLayout,

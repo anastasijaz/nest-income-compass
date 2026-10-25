@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Building2, CalendarDays, LogOut, Plus, Users, UsersRound, Wrench } from "lucide-react";
+import { AlertTriangle, Building2, CalendarDays, ListChecks, LogOut, Plus, Users, UsersRound, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { PeriodFilter } from "@/components/app/PeriodFilter";
@@ -53,6 +53,9 @@ function Dashboard() {
         <div className="flex items-center gap-1">
           <Button onClick={() => setAdding(true)} className="h-11 rounded-xl">
             <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Add property</span>
+          </Button>
+          <Button asChild variant="ghost" size="icon" className="h-11 w-11" aria-label="Tasks">
+            <Link to="/tasks"><ListChecks className="h-5 w-5" /></Link>
           </Button>
           <Button asChild variant="ghost" size="icon" className="h-11 w-11" aria-label="Visits calendar">
             <Link to="/calendar"><CalendarDays className="h-5 w-5" /></Link>

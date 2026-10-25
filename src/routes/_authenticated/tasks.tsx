@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Building2, Check, ListChecks, Plus, RotateCcw } from "lucide-react";
+import { ArrowLeft, Building2, Check, ListChecks, MessageCircle, Plus, RotateCcw } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -139,9 +139,23 @@ function TasksPage() {
                 </div>
               </button>
               {f.status === "todo" ? (
-                <Button size="sm" className="h-11 shrink-0 self-center rounded-xl" onClick={() => setComplete(f)}>
-                  <Check className="h-4 w-4" /> Done
-                </Button>
+                <div className="flex shrink-0 flex-col gap-2 self-center">
+                  <Button size="sm" className="h-11 rounded-xl" onClick={() => setComplete(f)}>
+                    <Check className="h-4 w-4" /> Done
+                  </Button>
+                  <Button asChild size="sm" variant="outline" className="h-11 rounded-xl">
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(
+                        `Reminder${f.assigned_to ? ` for ${memberName(members, f.assigned_to)}` : ""}: "${f.title}" at ${propName(f.property_id)} is still open${f.priority === "high" ? " (high priority)" : ""}.${f.description ? `\n${f.description}` : ""}`,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Send WhatsApp reminder"
+                    >
+                      <MessageCircle className="h-4 w-4" /> Remind
+                    </a>
+                  </Button>
+                </div>
               ) : (
                 <Button
                   size="icon"

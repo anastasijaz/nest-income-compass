@@ -82,10 +82,22 @@ function CalendarPage() {
       <div className="flex justify-center rounded-2xl border bg-card p-2 shadow-card">
         <Calendar
           mode="multiple"
-          selected={visitDays}
+          selected={[]}
+          modifiers={modifiers}
+          modifiersClassNames={modifiersClassNames}
           onSelect={() => {}}
           className="pointer-events-auto p-3"
         />
+      </div>
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+        {members
+          .filter((m) => visits.some((v) => v.user_id === m.user_id))
+          .map((m) => (
+            <span key={m.user_id} className="flex items-center gap-1.5">
+              <span className={cn("h-2.5 w-2.5 rounded-full", memberColor(m.user_id).dot)} />
+              {m.display_name || "Member"}
+            </span>
+          ))}
       </div>
 
       <div className="flex items-center justify-between">
@@ -106,6 +118,7 @@ function CalendarPage() {
           {shown.map((v) => (
             <li key={v.id}>
               <button className="flex w-full items-center gap-3 px-4 py-3 text-left" onClick={() => setSheet({ visit: v })}>
+                <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", memberColor(v.user_id).dot)} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">
                     {memberName(members, v.user_id)} <span className="font-normal text-muted-foreground">at</span> {propName(v.property_id)}

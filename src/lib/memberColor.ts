@@ -16,5 +16,5 @@ const PALETTE = [
 export function memberColor(userId: string) {
   let h = 0;
   for (const ch of userId) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return PALETTE[h % PALETTE.length];
+  return PALETTE[h % PALETTE.length] ?? PALETTE[0]!;
 }

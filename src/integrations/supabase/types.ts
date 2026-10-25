@@ -125,6 +125,7 @@ export type Database = {
           note: string | null
           property_id: string
           start_date: string
+          tenant_name: string | null
           user_id: string
           workspace_id: string | null
         }
@@ -137,6 +138,7 @@ export type Database = {
           note?: string | null
           property_id: string
           start_date: string
+          tenant_name?: string | null
           user_id?: string
           workspace_id?: string | null
         }
@@ -149,6 +151,7 @@ export type Database = {
           note?: string | null
           property_id?: string
           start_date?: string
+          tenant_name?: string | null
           user_id?: string
           workspace_id?: string | null
         }

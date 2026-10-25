@@ -1,0 +1,1 @@
+ALTER TABLE public.recurring_rents ADD COLUMN tenant_name text;

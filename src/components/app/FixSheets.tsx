@@ -15,7 +15,7 @@ import { meQuery, membersQuery, propertiesQuery, useRefresh, type Fix } from "@/
 const PRIORITIES = { low: "Low", medium: "Medium", high: "High" };
 const num = (s: string) => Number(s.replace(/\./g, "").replace(",", "."));
 
-export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolean; onOpenChange: (o: boolean) => void; propertyId?: string | undefined; fix?: Fix | undefined }) {
+export function FixSheet({ open, onOpenChange, propertyId, fix, title: titleProp }: { open: boolean; onOpenChange: (o: boolean) => void; propertyId?: string | undefined; fix?: Fix | undefined; title?: string | undefined }) {
   const refresh = useRefresh();
   const { data: properties = [] } = useQuery(propertiesQuery);
   const { data: members = [] } = useQuery(membersQuery);
@@ -67,7 +67,7 @@ export function FixSheet({ open, onOpenChange, propertyId, fix }: { open: boolea
     <FormSheet
       open={open}
       onOpenChange={onOpenChange}
-      title={fix ? "Edit fix" : "Add fix"}
+      title={titleProp ?? (fix ? "Edit fix" : "Add fix")}
       onSubmit={save}
       busy={busy}
       extraActions={

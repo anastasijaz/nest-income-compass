@@ -163,7 +163,7 @@ function TasksPage() {
         </ul>
       )}
 
-      <FixSheet open={!!edit} onOpenChange={(o) => !o && setEdit(null)} fix={edit?.fix} />
+      <FixSheet open={!!edit} onOpenChange={(o) => !o && setEdit(null)} fix={edit?.fix} title={edit?.fix ? "Edit task" : "Add task"} />
       <CompleteFixSheet fix={complete} onOpenChange={(o) => !o && setComplete(null)} />
     </div>
   );

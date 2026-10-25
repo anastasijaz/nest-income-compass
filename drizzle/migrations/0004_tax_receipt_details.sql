@@ -1,0 +1,2 @@
+ALTER TABLE public.taxes ADD COLUMN receipt_path text, ADD COLUMN document_date date;
+COMMENT ON COLUMN public.taxes.document_date IS 'Date printed on scanned document; distinct from user-confirmed payment due date';

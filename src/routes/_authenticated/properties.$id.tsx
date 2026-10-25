@@ -52,6 +52,7 @@ function PropertyPage() {
   const { id } = Route.useParams();
   const [period, setPeriod] = useState<Period>({ key: "year" });
   const [editing, setEditing] = useState(false);
+  const [section, setSection] = useState("finance");
   const props = useQuery(propertiesQuery);
   const txnsQ = useQuery(transactionsQuery);
   const fixesQ = useQuery(fixesQuery);
@@ -113,6 +114,14 @@ function PropertyPage() {
           </div>
         </div>
 
+        <Tabs value={section} onValueChange={setSection}>
+          <TabsList className="grid h-12 w-full grid-cols-2">
+            <TabsTrigger value="finance" className="h-10"><Landmark className="h-4 w-4" /> Finance</TabsTrigger>
+            <TabsTrigger value="fixes" className="h-10"><Wrench className="h-4 w-4" /> Fixes</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {section === "finance" ? <>
         <PeriodFilter value={period} onChange={setPeriod} />
 
         <section className="space-y-4 rounded-2xl border bg-card p-4 shadow-card">
@@ -153,10 +162,9 @@ function PropertyPage() {
         </section>
 
         <Tabs defaultValue="transactions">
-          <TabsList className="grid h-auto min-h-12 w-full grid-cols-4 rounded-xl">
+          <TabsList className="grid h-auto min-h-12 w-full grid-cols-3 rounded-xl">
             <TabsTrigger value="transactions" className="h-12 min-w-0 whitespace-normal rounded-lg px-1 text-xs sm:text-sm">Transactions</TabsTrigger>
             <TabsTrigger value="fixed-expenses" className="h-12 min-w-0 whitespace-normal rounded-lg px-1 text-xs sm:text-sm">Fixed expenses</TabsTrigger>
-            <TabsTrigger value="fixes" className="h-10 rounded-lg">Fixes</TabsTrigger>
             <TabsTrigger value="taxes" className="h-10 rounded-lg">
               Taxes {taxes.some((t) => isOverdue(t)) && <AlertTriangle className="ml-1 h-3.5 w-3.5 text-destructive" />}
             </TabsTrigger>
@@ -167,13 +175,11 @@ function PropertyPage() {
           <TabsContent value="fixed-expenses" className="mt-4">
             <TransactionsTab propertyId={id} txns={txns.filter(isFixedExpense)} fixedExpense />
           </TabsContent>
-          <TabsContent value="fixes" className="mt-4">
-            <FixesTab propertyId={id} fixes={fixes} />
-          </TabsContent>
           <TabsContent value="taxes" className="mt-4">
             <TaxesTab propertyId={id} taxes={taxes} />
           </TabsContent>
         </Tabs>
+        </> : <section aria-label="Property fixes"><FixesTab propertyId={id} fixes={fixes} /></section>}
       </div>
 
       <PropertySheet open={editing} onOpenChange={setEditing} property={p} />
@@ -204,7 +210,7 @@ function TransactionsTab({ propertyId, txns, fixedExpense = false }: { propertyI
         <Button variant="outline" className="h-12 rounded-xl" onClick={() => setSheet({ kind: "cost" })}>
           <Plus className="h-4 w-4" /> {fixedExpense ? "Add expense" : "Cost"}
         </Button>
-        {fixedExpense && <Button variant="outline" className="h-12 rounded-xl" onClick={() => setSheet({ kind: "cost", startScan: true })}><Receipt className="h-4 w-4" /> Scan receipt</Button>}
+        <Button variant="outline" className={cn("h-12 rounded-xl", !fixedExpense && "col-span-2")} onClick={() => setSheet({ kind: "cost", startScan: true })}><Receipt className="h-4 w-4" /> Scan receipt</Button>
       </div>
       {txns.length === 0 ? (
         <Empty icon={<Receipt className="h-8 w-8" />} title={fixedExpense ? "No fixed expenses in this period" : "No transactions in this period"} text={fixedExpense ? "" : "Add rent you've received or a cost you've paid. You can also scan a receipt."} />
@@ -311,13 +317,16 @@ function FixesTab({ propertyId, fixes }: { propertyId: string; fixes: Fix[] }) {
 
 function TaxesTab({ propertyId, taxes }: { propertyId: string; taxes: Tax[] }) {
   const refresh = useRefresh();
-  const [edit, setEdit] = useState<{ tax?: Tax } | null>(null);
+  const [edit, setEdit] = useState<{ tax?: Tax; startScan?: boolean } | null>(null);
   const [pay, setPay] = useState<Tax | null>(null);
   return (
     <>
-      <Button variant="outline" className="mb-3 h-12 w-full rounded-xl" onClick={() => setEdit({})}>
+      <div className="mb-3 grid grid-cols-2 gap-2">
+      <Button variant="outline" className="h-12 rounded-xl" onClick={() => setEdit({})}>
         <Plus className="h-4 w-4" /> Add tax
       </Button>
+      <Button variant="outline" className="h-12 rounded-xl" onClick={() => setEdit({ startScan: true })}><Receipt className="h-4 w-4" /> Scan receipt</Button>
+      </div>
       {taxes.length === 0 ? (
         <Empty icon={<Landmark className="h-8 w-8" />} title="No taxes yet" text="Add Grundsteuer or income tax with its due date and you'll be warned when it's overdue." />
       ) : (
@@ -358,7 +367,7 @@ function TaxesTab({ propertyId, taxes }: { propertyId: string; taxes: Tax[] }) {
           })}
         </ul>
       )}
-      <TaxSheet open={!!edit} onOpenChange={(o) => !o && setEdit(null)} propertyId={propertyId} tax={edit?.tax} />
+      <TaxSheet open={!!edit} onOpenChange={(o) => !o && setEdit(null)} propertyId={propertyId} tax={edit?.tax} startScan={edit?.startScan} />
       <PayTaxSheet tax={pay} onOpenChange={(o) => !o && setPay(null)} />
     </>
   );

@@ -166,11 +166,13 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          document_date: string | null
           due_date: string
           id: string
           label: string | null
           paid_at: string | null
           property_id: string
+          receipt_path: string | null
           status: string
           tax_type: string
           user_id: string
@@ -179,11 +181,13 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          document_date?: string | null
           due_date: string
           id?: string
           label?: string | null
           paid_at?: string | null
           property_id: string
+          receipt_path?: string | null
           status?: string
           tax_type?: string
           user_id?: string
@@ -192,11 +196,13 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          document_date?: string | null
           due_date?: string
           id?: string
           label?: string | null
           paid_at?: string | null
           property_id?: string
+          receipt_path?: string | null
           status?: string
           tax_type?: string
           user_id?: string

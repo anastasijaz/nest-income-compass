@@ -1,4 +1,5 @@
-# Fixed expenses
-- [x] Add a Fixed expenses tab beside Transactions and manual expense entry.
-- [x] Reuse photo scanning with date, amount, and purpose extraction in German and Serbian.
-- [x] Verify saving, financial totals, and multilingual scanning.
+# Property finances and task reminders
+- [ ] Add Scan receipt to Transactions and Taxes; retain tax photo and document date.
+- [ ] Separate Finance and Fixes on each property.
+- [ ] Verify scanning and saving through the signed-in pages.
+- [ ] Enable visit-based assigned-task email reminders (blocked: sender domain setup required).

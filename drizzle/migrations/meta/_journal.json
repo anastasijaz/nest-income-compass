@@ -29,6 +29,13 @@
       "when": 1792945738600,
       "tag": "0003_fixed_expense_transactions",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792946169935,
+      "tag": "0004_tax_receipt_details",
+      "breakpoints": true
     }
   ]
 }

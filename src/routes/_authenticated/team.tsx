@@ -10,6 +10,7 @@ import { PeriodFilter } from "@/components/app/PeriodFilter";
 import { inputLg } from "@/components/app/fields";
 import { formatEUR, inRange, periodRange, type Period } from "@/lib/finance";
 import { fixesQuery, meQuery, membersQuery, transactionsQuery, workspaceQuery } from "@/lib/queries";
+import { memberColor } from "@/lib/memberColor";
 import { tally } from "@/lib/tally";
 
 export const Route = createFileRoute("/_authenticated/team")({
@@ -107,7 +108,7 @@ function TeamPage() {
         <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
           {members.map((m) => (
             <li key={m.user_id} className="flex items-center gap-3 px-4 py-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted font-semibold uppercase">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold uppercase ${memberColor(m.user_id).avatar}`}>
                 {(m.display_name || "?").slice(0, 1)}
               </span>
               <p className="min-w-0 flex-1 truncate font-medium">

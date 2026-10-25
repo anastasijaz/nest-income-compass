@@ -31,6 +31,7 @@ import {
 import { fixesQuery, memberName, membersQuery, propertiesQuery, taxesQuery, transactionsQuery, useRefresh, type Fix, type Tax, type Transaction } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { isFixedExpense } from "@/lib/fixed-expenses";
+import { TenantRents } from "@/components/app/TenantRents";
 
 export const Route = createFileRoute("/_authenticated/properties/$id")({
   head: () => ({
@@ -122,6 +123,7 @@ function PropertyPage() {
         </Tabs>
 
         {section === "finance" ? <>
+        <TenantRents propertyId={p.id} tenants={p.tenants} />
         <PeriodFilter value={period} onChange={setPeriod} />
 
         <section className="space-y-4 rounded-2xl border bg-card p-4 shadow-card">

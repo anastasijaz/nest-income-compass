@@ -103,7 +103,7 @@ function TenantSheet({ propertyId, rent, onClose }: { propertyId: string; rent: 
       title={rent ? "Edit tenant rent" : "Add tenant rent"}
       onSubmit={save}
       busy={busy}
-      onDelete={rent ? stop : undefined}
+      extraActions={rent ? <Button type="button" variant="outline" size="lg" className="h-12 rounded-xl" onClick={stop}>Stop rent</Button> : undefined}
     >
       <Field label="Tenant name"><Input className={inputLg} value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <Field label="Monthly rent (Miete, €)"><Input className={inputLg} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>

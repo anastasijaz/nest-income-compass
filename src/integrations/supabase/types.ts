@@ -220,6 +220,7 @@ export type Database = {
           date: string
           fix_id: string | null
           id: string
+          is_fixed_expense: boolean
           kind: string
           note: string | null
           paid_by: string | null
@@ -238,6 +239,7 @@ export type Database = {
           date?: string
           fix_id?: string | null
           id?: string
+          is_fixed_expense?: boolean
           kind: string
           note?: string | null
           paid_by?: string | null
@@ -256,6 +258,7 @@ export type Database = {
           date?: string
           fix_id?: string | null
           id?: string
+          is_fixed_expense?: boolean
           kind?: string
           note?: string | null
           paid_by?: string | null

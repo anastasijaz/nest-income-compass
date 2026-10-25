@@ -1,0 +1,2 @@
+ALTER TABLE public.transactions ADD COLUMN is_fixed_expense boolean NOT NULL DEFAULT false;
+COMMENT ON COLUMN public.transactions.is_fixed_expense IS 'Fixed operating expenses shown in a dedicated property tab; remain cost transactions for financial totals and payer tallies.';

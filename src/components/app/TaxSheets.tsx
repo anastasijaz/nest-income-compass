@@ -38,7 +38,8 @@ export function TaxSheet({ open, onOpenChange, propertyId, tax, startScan }: { o
       const timer = setTimeout(() => scanRef.current?.click(), 150);
       return () => clearTimeout(timer);
     }
-  }, [open, tax]);
+    return undefined;
+  }, [open, tax, startScan]);
 
   async function onScan(file: File) {
     setScanning(true);

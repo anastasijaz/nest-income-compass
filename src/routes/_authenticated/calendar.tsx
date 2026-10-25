@@ -39,12 +39,29 @@ function CalendarPage() {
   const [showPast, setShowPast] = useState(false);
   const today = todayISO();
 
-  const visitDays = useMemo(() => {
-    const days: Date[] = [];
+  const { modifiers, modifiersClassNames } = useMemo(() => {
+    const owners = new Map<string, string[]>();
     for (const v of visits) {
-      for (let d = parseISO(v.start_date); d <= parseISO(v.end_date) && days.length < 2000; d = new Date(d.getTime() + 86400000)) days.push(d);
+      for (let d = parseISO(v.start_date); d <= parseISO(v.end_date) && owners.size < 5000; d = addDays(d, 1)) {
+        const key = format(d, "yyyy-MM-dd");
+        const ids = owners.get(key) ?? [];
+        if (!ids.includes(v.user_id)) ids.push(v.user_id);
+        owners.set(key, ids);
+      }
     }
-    return days;
+    const mods: Record<string, (date: Date) => boolean> = {};
+    const cls: Record<string, string> = {};
+    const seen = new Set<string>();
+    for (const ids of owners.values()) {
+      for (const uid of ids) {
+        if (seen.has(uid)) continue;
+        seen.add(uid);
+        const key = `u_${uid.replace(/-/g, "")}`;
+        mods[key] = (date: Date) => !!owners.get(format(date, "yyyy-MM-dd"))?.includes(uid);
+        cls[key] = memberColor(uid).cell;
+      }
+    }
+    return { modifiers: mods, modifiersClassNames: cls };
   }, [visits]);
 
   const shown = visits.filter((v) => showPast || v.end_date >= today);

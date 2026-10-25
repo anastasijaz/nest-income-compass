@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CalendarDays, Plus, Trash2 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { addDays, format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import { FormSheet } from "@/components/app/FormSheet";
 import { Field, NativeSelect, inputLg } from "@/components/app/fields";
 import { todayISO } from "@/lib/finance";
 import { meQuery, memberName, membersQuery, propertiesQuery, useRefresh, visitsQuery, type Visit } from "@/lib/queries";
+import { memberColor } from "@/lib/memberColor";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -37,12 +39,29 @@ function CalendarPage() {
   const [showPast, setShowPast] = useState(false);
   const today = todayISO();
 
-  const visitDays = useMemo(() => {
-    const days: Date[] = [];
+  const { modifiers, modifiersClassNames } = useMemo(() => {
+    const owners = new Map<string, string[]>();
     for (const v of visits) {
-      for (let d = parseISO(v.start_date); d <= parseISO(v.end_date) && days.length < 2000; d = new Date(d.getTime() + 86400000)) days.push(d);
+      for (let d = parseISO(v.start_date); d <= parseISO(v.end_date) && owners.size < 5000; d = addDays(d, 1)) {
+        const key = format(d, "yyyy-MM-dd");
+        const ids = owners.get(key) ?? [];
+        if (!ids.includes(v.user_id)) ids.push(v.user_id);
+        owners.set(key, ids);
+      }
     }
-    return days;
+    const mods: Record<string, (date: Date) => boolean> = {};
+    const cls: Record<string, string> = {};
+    const seen = new Set<string>();
+    for (const ids of owners.values()) {
+      for (const uid of ids) {
+        if (seen.has(uid)) continue;
+        seen.add(uid);
+        const key = `u_${uid.replace(/-/g, "")}`;
+        mods[key] = (date: Date) => !!owners.get(format(date, "yyyy-MM-dd"))?.includes(uid);
+        cls[key] = memberColor(uid).cell;
+      }
+    }
+    return { modifiers: mods, modifiersClassNames: cls };
   }, [visits]);
 
   const shown = visits.filter((v) => showPast || v.end_date >= today);
@@ -63,10 +82,22 @@ function CalendarPage() {
       <div className="flex justify-center rounded-2xl border bg-card p-2 shadow-card">
         <Calendar
           mode="multiple"
-          selected={visitDays}
+          selected={[]}
+          modifiers={modifiers}
+          modifiersClassNames={modifiersClassNames}
           onSelect={() => {}}
           className="pointer-events-auto p-3"
         />
+      </div>
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+        {members
+          .filter((m) => visits.some((v) => v.user_id === m.user_id))
+          .map((m) => (
+            <span key={m.user_id} className="flex items-center gap-1.5">
+              <span className={cn("h-2.5 w-2.5 rounded-full", memberColor(m.user_id).dot)} />
+              {m.display_name || "Member"}
+            </span>
+          ))}
       </div>
 
       <div className="flex items-center justify-between">
@@ -87,6 +118,7 @@ function CalendarPage() {
           {shown.map((v) => (
             <li key={v.id}>
               <button className="flex w-full items-center gap-3 px-4 py-3 text-left" onClick={() => setSheet({ visit: v })}>
+                <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", memberColor(v.user_id).dot)} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">
                     {memberName(members, v.user_id)} <span className="font-normal text-muted-foreground">at</span> {propName(v.property_id)}

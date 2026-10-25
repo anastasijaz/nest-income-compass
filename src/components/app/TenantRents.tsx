@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormSheet } from "@/components/app/FormSheet";
 import { Field, inputLg } from "@/components/app/fields";
-import { eur } from "@/lib/finance";
+import { formatEUR as eur } from "@/lib/finance";
 import { recurringRentsQuery, useRefresh, type RecurringRent } from "@/lib/queries";
 
 export function TenantRents({ propertyId, tenants }: { propertyId: string; tenants: number }) {

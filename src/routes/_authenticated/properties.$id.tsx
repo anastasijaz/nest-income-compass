@@ -30,6 +30,7 @@ import {
 } from "@/lib/finance";
 import { fixesQuery, memberName, membersQuery, propertiesQuery, taxesQuery, transactionsQuery, useRefresh, type Fix, type Tax, type Transaction } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+import { isFixedExpense } from "@/lib/fixed-expenses";
 
 export const Route = createFileRoute("/_authenticated/properties/$id")({
   head: () => ({
@@ -38,6 +39,8 @@ export const Route = createFileRoute("/_authenticated/properties/$id")({
       { name: "description", content: "Income, costs, fixes and taxes for this property." },
       { property: "og:title", content: "Property — Rentwise" },
       { property: "og:description", content: "Income, costs, fixes and taxes for this property." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: PropertyPage,
@@ -150,15 +153,19 @@ function PropertyPage() {
         </section>
 
         <Tabs defaultValue="transactions">
-          <TabsList className="grid h-12 w-full grid-cols-3 rounded-xl">
-            <TabsTrigger value="transactions" className="h-10 rounded-lg">Transactions</TabsTrigger>
+          <TabsList className="grid h-auto min-h-12 w-full grid-cols-4 rounded-xl">
+            <TabsTrigger value="transactions" className="h-12 min-w-0 whitespace-normal rounded-lg px-1 text-xs sm:text-sm">Transactions</TabsTrigger>
+            <TabsTrigger value="fixed-expenses" className="h-12 min-w-0 whitespace-normal rounded-lg px-1 text-xs sm:text-sm">Fixed expenses</TabsTrigger>
             <TabsTrigger value="fixes" className="h-10 rounded-lg">Fixes</TabsTrigger>
             <TabsTrigger value="taxes" className="h-10 rounded-lg">
               Taxes {taxes.some((t) => isOverdue(t)) && <AlertTriangle className="ml-1 h-3.5 w-3.5 text-destructive" />}
             </TabsTrigger>
           </TabsList>
           <TabsContent value="transactions" className="mt-4">
-            <TransactionsTab propertyId={id} txns={txns} />
+            <TransactionsTab propertyId={id} txns={txns.filter((t) => !isFixedExpense(t))} />
+          </TabsContent>
+          <TabsContent value="fixed-expenses" className="mt-4">
+            <TransactionsTab propertyId={id} txns={txns.filter(isFixedExpense)} fixedExpense />
           </TabsContent>
           <TabsContent value="fixes" className="mt-4">
             <FixesTab propertyId={id} fixes={fixes} />
@@ -186,20 +193,21 @@ function Empty({ icon, title, text, children }: { icon: React.ReactNode; title: 
   );
 }
 
-function TransactionsTab({ propertyId, txns }: { propertyId: string; txns: Transaction[] }) {
-  const [sheet, setSheet] = useState<{ kind: TxnKind; txn?: Transaction } | null>(null);
+function TransactionsTab({ propertyId, txns, fixedExpense = false }: { propertyId: string; txns: Transaction[]; fixedExpense?: boolean }) {
+  const [sheet, setSheet] = useState<{ kind: TxnKind; txn?: Transaction; startScan?: boolean } | null>(null);
   return (
     <>
       <div className="mb-3 grid grid-cols-2 gap-2">
-        <Button variant="outline" className="h-12 rounded-xl" onClick={() => setSheet({ kind: "income" })}>
+        {!fixedExpense && <Button variant="outline" className="h-12 rounded-xl" onClick={() => setSheet({ kind: "income" })}>
           <Plus className="h-4 w-4" /> Income
-        </Button>
+        </Button>}
         <Button variant="outline" className="h-12 rounded-xl" onClick={() => setSheet({ kind: "cost" })}>
-          <Plus className="h-4 w-4" /> Cost
+          <Plus className="h-4 w-4" /> {fixedExpense ? "Add expense" : "Cost"}
         </Button>
+        {fixedExpense && <Button variant="outline" className="h-12 rounded-xl" onClick={() => setSheet({ kind: "cost", startScan: true })}><Receipt className="h-4 w-4" /> Scan receipt</Button>}
       </div>
       {txns.length === 0 ? (
-        <Empty icon={<Receipt className="h-8 w-8" />} title="No transactions in this period" text="Add rent you've received or a cost you've paid. You can also scan a receipt." />
+        <Empty icon={<Receipt className="h-8 w-8" />} title={fixedExpense ? "No fixed expenses in this period" : "No transactions in this period"} text={fixedExpense ? "" : "Add rent you've received or a cost you've paid. You can also scan a receipt."} />
       ) : (
         <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
           {txns.map((t) => (
@@ -226,7 +234,7 @@ function TransactionsTab({ propertyId, txns }: { propertyId: string; txns: Trans
           ))}
         </ul>
       )}
-      <TransactionSheet open={!!sheet} onOpenChange={(o) => !o && setSheet(null)} kind={sheet?.kind ?? "cost"} txn={sheet?.txn} propertyId={propertyId} />
+      <TransactionSheet open={!!sheet} onOpenChange={(o) => !o && setSheet(null)} kind={sheet?.kind ?? "cost"} txn={sheet?.txn} propertyId={propertyId} fixedExpense={fixedExpense} startScan={sheet?.startScan} />
     </>
   );
 }

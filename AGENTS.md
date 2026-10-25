@@ -12,3 +12,4 @@
 - Data access goes straight from the browser Supabase client with RLS scoped to the caller's shared group (`workspace_id = my_workspace_id()`; each user belongs to exactly one group, joined by invite code); only AI receipt parsing runs server-side (`src/lib/receipt.functions.ts`) because it needs the gateway key.
 - Recurring rent is materialized by the idempotent `generate_recurring_rent()` SQL function, called on each signed-in app load — no cron needed.
 - Uploaded images live in the private `files` bucket under `<user_id>/...` and are shown via signed URLs; members of the same group can read each other's folders.
+- Fixed operating expenses use the transactions table's is_fixed_expense flag, not a second ledger, so property totals and payer tallies count each payment once; receipt extraction returns purpose and currency without silently converting non-EUR bills.

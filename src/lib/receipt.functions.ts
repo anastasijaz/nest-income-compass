@@ -1,14 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-export interface ReceiptData {
-  vendor: string | null;
-  date: string | null;
-  total: number | null;
-  category: string;
-}
-
-const CATEGORIES = ["repairs", "maintenance", "utilities", "insurance", "property_tax", "mortgage", "management_fees", "other"];
+import { RECEIPT_CATEGORIES, RECEIPT_PROMPT, validateReceiptData, type ReceiptData } from "./receipt-data";
 
 export const parseReceipt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -28,7 +20,8 @@ export const parseReceipt = createServerFn({ method: "POST" })
         model: "openai/gpt-6-astra",
         stream: true,
         store: false,
-        reasoning: { effort: "low" },
+        reasoning: { effort: "low", summary: "auto" },
+        include: ["reasoning.encrypted_content"],
         input: [
           {
             role: "user",
@@ -36,7 +29,7 @@ export const parseReceipt = createServerFn({ method: "POST" })
               {
                 type: "input_text",
                 text:
-                  "Extract data from this receipt or invoice for a rental property owner. Return vendor name, the purchase/invoice date as YYYY-MM-DD, and the final total amount paid in EUR as a number. Suggest the best cost category: repairs (fixing broken things, tradespeople), maintenance (regular upkeep, cleaning, gardening, supplies), utilities (electricity, water, gas, heating, internet), insurance, property_tax, mortgage (loan payments), management_fees, other. Use null for anything unreadable.",
+                  RECEIPT_PROMPT,
               },
               { type: "input_image", image_url: data.image },
             ],
@@ -50,12 +43,14 @@ export const parseReceipt = createServerFn({ method: "POST" })
             schema: {
               type: "object",
               additionalProperties: false,
-              required: ["vendor", "date", "total", "category"],
+              required: ["vendor", "date", "total", "category", "purpose", "currency"],
               properties: {
                 vendor: { type: ["string", "null"] },
                 date: { type: ["string", "null"] },
                 total: { type: ["number", "null"] },
-                category: { type: "string", enum: CATEGORIES },
+                category: { type: "string", enum: RECEIPT_CATEGORIES },
+                purpose: { type: ["string", "null"] },
+                currency: { type: ["string", "null"] },
               },
             },
           },
@@ -64,13 +59,13 @@ export const parseReceipt = createServerFn({ method: "POST" })
     });
 
     if (!res.ok || !res.body) {
+      const failure = await res.json().catch(() => null) as { message?: string; error?: { message?: string } } | null;
       const msg =
-        res.status === 429
+        failure?.message || failure?.error?.message || (res.status === 429
           ? "Too many scans right now — please try again in a minute."
           : res.status === 402
             ? "AI credits are used up. Add credits in workspace settings to keep scanning."
-            : `Couldn't read the receipt (${res.status}).`;
-      console.error("receipt parse failed", res.status, await res.text().catch(() => ""));
+            : `Couldn't read the receipt (${res.status}).`);
       throw new Error(msg);
     }
 
@@ -88,20 +83,15 @@ export const parseReceipt = createServerFn({ method: "POST" })
         if (!line.startsWith("data:")) continue;
         const payload = line.slice(5).trim();
         if (!payload || payload === "[DONE]") continue;
-        try {
-          const ev = JSON.parse(payload);
+        let ev;
+        try { ev = JSON.parse(payload); } catch { continue; }
           if (ev.type === "response.output_text.delta") text += ev.delta ?? "";
-          if (ev.type === "response.failed" || ev.type === "error") throw new Error("Couldn't read the receipt.");
-        } catch (e) {
-          if (e instanceof Error && e.message.startsWith("Couldn't")) throw e;
-        }
+          if (ev.type === "response.refusal.delta" || ev.type === "response.refusal.done") throw new Error(ev.refusal || ev.delta || "The receipt could not be processed.");
+          if (ev.type === "response.failed" || ev.type === "error") throw new Error(ev.response?.error?.message || ev.error?.message || ev.message || "Couldn't read the receipt.");
       }
     }
     try {
-      const parsed = JSON.parse(text) as ReceiptData;
-      if (parsed.date && !/^\d{4}-\d{2}-\d{2}$/.test(parsed.date)) parsed.date = null;
-      if (!CATEGORIES.includes(parsed.category)) parsed.category = "other";
-      return parsed;
+      return validateReceiptData(JSON.parse(text));
     } catch {
       throw new Error("Couldn't read the receipt — please fill it in manually.");
     }

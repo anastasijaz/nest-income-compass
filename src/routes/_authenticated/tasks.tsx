@@ -37,6 +37,7 @@ const PRIORITY_STYLE: Record<string, string> = {
 };
 
 function TasksPage() {
+  const refresh = useRefresh();
   const { data: fixes = [] } = useQuery(fixesQuery);
   const { data: properties = [] } = useQuery(propertiesQuery);
   const { data: members = [] } = useQuery(membersQuery);
@@ -151,7 +152,7 @@ function TasksPage() {
                     if (!confirm("Reopen this task? Its recorded cost will be removed.")) return;
                     const { error } = await reopenFix(f);
                     if (error) toast.error(error.message);
-                    useRefresh()();
+                    refresh();
                   }}
                 >
                   <RotateCcw className="h-4 w-4" />

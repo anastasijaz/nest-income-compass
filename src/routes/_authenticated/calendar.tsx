@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CalendarDays, Plus, Trash2 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { addDays, format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import { FormSheet } from "@/components/app/FormSheet";
 import { Field, NativeSelect, inputLg } from "@/components/app/fields";
 import { todayISO } from "@/lib/finance";
 import { meQuery, memberName, membersQuery, propertiesQuery, useRefresh, visitsQuery, type Visit } from "@/lib/queries";
+import { memberColor } from "@/lib/memberColor";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({

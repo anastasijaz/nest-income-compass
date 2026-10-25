@@ -93,6 +93,8 @@ export const COST_CATEGORIES = {
   repairs: "Repairs",
   maintenance: "Maintenance",
   utilities: "Utilities",
+  energy: "Energy / electricity",
+  heating: "Heating",
   insurance: "Insurance",
   property_tax: "Property tax",
   mortgage: "Mortgage / loan",

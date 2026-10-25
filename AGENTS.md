@@ -14,3 +14,4 @@
 - Uploaded images live in the private `files` bucket under `<user_id>/...` and are shown via signed URLs; members of the same group can read each other's folders.
 - Fixed operating expenses use the transactions table's is_fixed_expense flag, not a second ledger, so property totals and payer tallies count each payment once; receipt extraction returns purpose and currency without silently converting non-EUR bills.
 - Tax receipt scans reuse the authenticated receipt parser and private file storage; keep scanned document dates separate from payment due dates to avoid inventing deadlines.
+- App emails use the managed server-only template sender; delivery, suppression and idempotency belong to the managed email service, not local email queues or tables.

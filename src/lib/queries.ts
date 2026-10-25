@@ -54,6 +54,12 @@ export const visitsQuery = queryOptions({
   queryFn: () => run<Visit[]>(supabase.from("visits").select("*").order("start_date")),
 });
 
+export type RecurringRent = Tables<"recurring_rents">;
+export const recurringRentsQuery = queryOptions({
+  queryKey: ["recurring_rents"],
+  queryFn: () => run<RecurringRent[]>(supabase.from("recurring_rents").select("*").order("created_at")),
+});
+
 export const meQuery = queryOptions({
   queryKey: ["me"],
   staleTime: Infinity,

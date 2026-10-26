@@ -1,10 +1,11 @@
+import type { ReactNode } from "react";
 import { Filter, X } from "lucide-react";
 import { NativeSelect } from "./fields";
 import { countryLabel } from "@/lib/countries";
-import { COUNTRY_ANY, isFilterActive, type MoneyFilter, type PropertyFilter, type TenantFilter } from "@/lib/property-filter";
+import { COUNTRY_ANY, COUNTRY_NONE, isFilterActive, type MoneyFilter, type PropertyFilter, type TenantFilter } from "@/lib/property-filter";
 import { cn } from "@/lib/utils";
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button
       type="button"
@@ -73,7 +74,7 @@ export function PropertyFilterBar({
         </p>
       </div>
 
-      {active && value.country !== COUNTRY_ANY && value.country !== "__none__" && (
+      {active && value.country !== COUNTRY_ANY && value.country !== COUNTRY_NONE && (
         <p className="mt-2 text-xs text-muted-foreground">Showing {countryLabel(value.country) || value.country} only.</p>
       )}
     </section>

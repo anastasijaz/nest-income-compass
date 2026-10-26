@@ -9,7 +9,7 @@ import { FormSheet } from "./FormSheet";
 import { Field, NativeSelect, inputLg } from "./fields";
 import { ImagePicker } from "./ImagePicker";
 import { PROPERTY_TYPES } from "@/lib/finance";
-import { COUNTRIES, countryOptions } from "@/lib/countries";
+import { countryChoices } from "@/lib/countries";
 import { useRefresh, type Property } from "@/lib/queries";
 
 export function PropertySheet({

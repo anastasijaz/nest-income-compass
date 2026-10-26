@@ -11,6 +11,9 @@ import { QuickAdd } from "@/components/app/QuickAdd";
 import { CoverageBadge, CoverageBar } from "@/components/app/Status";
 import { formatEUR, inRange, isOverdue, periodRange, PROPERTY_TYPES, summarize, type Period } from "@/lib/finance";
 import { fixesQuery, propertiesQuery, taxesQuery, transactionsQuery, type Property } from "@/lib/queries";
+import { PropertyFilterBar } from "@/components/app/PropertyFilter";
+import { countryFilterOptions, EMPTY_FILTER, filterProperties, isFilterActive, type PropertyFilter } from "@/lib/property-filter";
+import { countryLabel } from "@/lib/countries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -30,6 +33,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const [period, setPeriod] = useState<Period>({ key: "month" });
   const [adding, setAdding] = useState(false);
+  const [filter, setFilter] = useState<PropertyFilter>(EMPTY_FILTER);
   const props = useQuery(propertiesQuery);
   const txns = useQuery(transactionsQuery);
   const fixes = useQuery(fixesQuery);

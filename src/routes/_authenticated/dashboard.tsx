@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Building2, CalendarDays, ListChecks, LogOut, Plus, Users, UsersRound, Wrench } from "lucide-react";
+import { AlertTriangle, Building2, CalendarDays, Filter, ListChecks, LogOut, Plus, Users, UsersRound, Wrench, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { PeriodFilter } from "@/components/app/PeriodFilter";
@@ -129,9 +129,18 @@ function Dashboard() {
             <Plus className="h-4 w-4" /> Add property
           </Button>
         </div>
+      ) : !visible.length ? (
+        <div className="mt-10 flex flex-col items-center rounded-3xl border border-dashed bg-card px-6 py-14 text-center">
+          <Filter className="h-10 w-10 text-muted-foreground" />
+          <h2 className="mt-4 text-lg font-semibold">No properties match</h2>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">Nothing fits the filters you picked. Try widening them.</p>
+          <Button className="mt-6 h-12 rounded-xl px-6" onClick={() => setFilter(EMPTY_FILTER)}>
+            <X className="h-4 w-4" /> Clear filters
+          </Button>
+        </div>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {props.data.map((p) => (
+          {visible.map((p) => (
             <PropertyCard
               key={p.id}
               p={p}
@@ -176,7 +185,9 @@ function PropertyCard({ p, txns, openFixes, overdue }: { p: Property; txns: { ki
               {PROPERTY_TYPES[p.property_type as keyof typeof PROPERTY_TYPES] ?? p.property_type}
             </span>
           </div>
-          {p.address && <p className="mt-0.5 truncate text-sm text-muted-foreground">{p.address}</p>}
+          {(p.address || p.country) && (
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">{[p.address, countryLabel(p.country)].filter(Boolean).join(", ")}</p>
+          )}
           <div className="mt-2 flex gap-4 text-sm">
             <span className="tabular">{formatEUR(Number(p.monthly_rent))}/mo</span>
             <span className="flex items-center gap-1 text-muted-foreground">

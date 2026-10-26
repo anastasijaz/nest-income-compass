@@ -1,5 +1,7 @@
 /** Dashboard property filtering: by tenants, by whether it makes money, and by country. */
 
+import { countryLabel } from "@/lib/countries";
+
 export type TenantFilter = "all" | "occupied" | "empty";
 export type MoneyFilter = "all" | "profit" | "loss";
 

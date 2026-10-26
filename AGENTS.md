@@ -16,3 +16,4 @@
 - Tax receipt scans reuse the authenticated receipt parser and private file storage; keep scanned document dates separate from payment due dates to avoid inventing deadlines.
 - App emails use the managed server-only template sender; delivery, suppression and idempotency belong to the managed email service, not local email queues or tables.
 - Offline/installable support uses vite-plugin-pwa generateSW registered only via src/lib/pwa.ts, which refuses dev, iframes and Lovable preview hosts — stale workers would break previews.
+- A property's country is stored as an ISO alpha-2 code in `properties.country` (nullable, so older rows can be unset); the selectable list and label lookup live in `src/lib/countries.ts`, and dashboard filtering rules live in `src/lib/property-filter.ts`.

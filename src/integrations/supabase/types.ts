@@ -79,6 +79,7 @@ export type Database = {
       properties: {
         Row: {
           address: string
+          country: string | null
           created_at: string
           id: string
           monthly_rent: number
@@ -91,6 +92,7 @@ export type Database = {
         }
         Insert: {
           address?: string
+          country?: string | null
           created_at?: string
           id?: string
           monthly_rent?: number
@@ -103,6 +105,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          country?: string | null
           created_at?: string
           id?: string
           monthly_rent?: number

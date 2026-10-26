@@ -43,6 +43,23 @@ function Dashboard() {
   const inPeriod = useMemo(() => (txns.data ?? []).filter((t) => inRange(t.date, range)), [txns.data, range.from, range.to]);
   const total = summarize(inPeriod);
 
+  const netBy = useMemo(() => {
+    const groups = new Map<string, { kind: string; amount: number; date: string }[]>();
+    for (const t of inPeriod) {
+      const id = t.property_id ?? "";
+      const list = groups.get(id);
+      if (list) list.push(t);
+      else groups.set(id, [t]);
+    }
+    return new Map([...groups].map(([id, list]) => [id, summarize(list).net]));
+  }, [inPeriod]);
+
+  const visible = useMemo(
+    () => filterProperties(props.data ?? [], filter, (p) => netBy.get(p.id) ?? 0),
+    [props.data, filter, netBy],
+  );
+  const countries = useMemo(() => countryFilterOptions(props.data ?? []), [props.data]);
+
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
@@ -91,6 +108,11 @@ function Dashboard() {
       <div className="mt-5">
         <PeriodFilter value={period} onChange={setPeriod} />
       </div>
+
+      {!!props.data?.length && (
+        <PropertyFilterBar value={filter} onChange={setFilter} countryOptions={countries} shown={visible.length} total={props.data.length} />
+      )}
+
 
       {props.isLoading ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

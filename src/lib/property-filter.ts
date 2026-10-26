@@ -40,12 +40,17 @@ export function filterProperties<T extends { tenants: number | null; country: st
 }
 
 /** Country select options: only countries actually in use, plus "no country set" when some are missing one. */
-export function countryFilterOptions<T extends { country: string | null }>(properties: T[]) {
+export function countryFilterOptions<T extends { country: string | null }>(properties: T[]): [string, string][] {
   const seen = new Set<string>();
   let missing = false;
   for (const p of properties) {
     if (p.country) seen.add(p.country);
     else missing = true;
   }
-  return [...seen].sort((a, b) => a.localeCompare(b)).map((code) => [code, code] as [string, string]);
+  const codes = [...seen].sort((a, b) => countryLabel(a).localeCompare(countryLabel(b)));
+  return [
+    [COUNTRY_ANY, "All countries"],
+    ...codes.map((code) => [code, countryLabel(code)] as [string, string]),
+    ...(missing ? ([[COUNTRY_NONE, "No country set"]] as [string, string][]) : []),
+  ];
 }

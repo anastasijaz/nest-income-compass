@@ -28,8 +28,8 @@ describe("property filters", () => {
   it("splits by tenants, counting null as no tenants", () => {
     expect(ids({ ...EMPTY_FILTER, tenants: "occupied" })).toEqual(["berlin", "munich", "unknown"]);
     expect(ids({ ...EMPTY_FILTER, tenants: "empty" })).toEqual(["novi-sad"]);
-    expect(ids({ ...EMPTY_FILTER, tenants: "occupied" })).not.toContain("unknown-null");
-    filterProperties([{ tenants: null, country: "DE" }], { ...EMPTY_FILTER, tenants: "empty" }, () => 0);
+    expect(filterProperties([{ tenants: null, country: "DE" }], { ...EMPTY_FILTER, tenants: "empty" }, () => 0)).toHaveLength(1);
+    expect(filterProperties([{ tenants: null, country: "DE" }], { ...EMPTY_FILTER, tenants: "occupied" }, () => 0)).toHaveLength(0);
   });
   it("splits by money using strict net: break-even is neither", () => {
     expect(ids({ ...EMPTY_FILTER, money: "profit" })).toEqual(["berlin", "unknown"]);

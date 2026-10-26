@@ -89,11 +89,11 @@ function PropertyPage() {
       <div className="relative">
         <Photo path={p.photo_path} alt={p.name} className="aspect-[16/9] max-h-72 w-full md:rounded-b-3xl" fallback={<Building2 className="h-10 w-10" />} />
         <div className="absolute inset-x-0 top-0 flex justify-between p-4">
-          <Link to="/dashboard" aria-label="Back" className="flex h-11 w-11 items-center justify-center rounded-full bg-card/95 shadow-card">
-            <ArrowLeft className="h-5 w-5" />
+          <Link to="/dashboard" aria-label="Back" className="flex h-14 w-14 items-center justify-center rounded-full bg-card/95 shadow-card">
+            <ArrowLeft className="h-7 w-7" />
           </Link>
-          <button onClick={() => setEditing(true)} aria-label="Edit property" className="flex h-11 w-11 items-center justify-center rounded-full bg-card/95 shadow-card">
-            <Pencil className="h-4 w-4" />
+          <button onClick={() => setEditing(true)} aria-label="Edit property" className="flex h-14 w-14 items-center justify-center rounded-full bg-card/95 shadow-card">
+            <Pencil className="h-6 w-6" />
           </button>
         </div>
       </div>

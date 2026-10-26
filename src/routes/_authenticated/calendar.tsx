@@ -70,8 +70,8 @@ function CalendarPage() {
   return (
     <div className="mx-auto min-h-dvh max-w-2xl space-y-5 px-4 pb-24 pt-6">
       <header className="flex items-center gap-3">
-        <Link to="/dashboard" aria-label="Back" className="flex h-11 w-11 items-center justify-center rounded-full border bg-card">
-          <ArrowLeft className="h-5 w-5" />
+        <Link to="/dashboard" aria-label="Back" className="flex h-14 w-14 items-center justify-center rounded-full border bg-card">
+          <ArrowLeft className="h-7 w-7" />
         </Link>
         <h1 className="flex-1 text-2xl font-semibold">Visits</h1>
         <Button className="h-11 rounded-xl" onClick={() => setSheet({})} disabled={!properties.length}>

@@ -43,6 +43,13 @@
       "when": 1792946738587,
       "tag": "0005_tenant_rents",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793020539121,
+      "tag": "0006_property_country",
+      "breakpoints": true
     }
   ]
 }

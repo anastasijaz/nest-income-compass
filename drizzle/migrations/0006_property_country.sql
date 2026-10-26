@@ -1,0 +1,2 @@
+ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS country text;
+COMMENT ON COLUMN public.properties.country IS 'ISO alpha-2 country code, e.g. DE. Nullable: older properties may not have one set.';

@@ -9,6 +9,7 @@ import { FormSheet } from "./FormSheet";
 import { Field, NativeSelect, inputLg } from "./fields";
 import { ImagePicker } from "./ImagePicker";
 import { PROPERTY_TYPES } from "@/lib/finance";
+import { countryChoices } from "@/lib/countries";
 import { useRefresh, type Property } from "@/lib/queries";
 
 export function PropertySheet({
@@ -23,13 +24,14 @@ export function PropertySheet({
   const refresh = useRefresh();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [f, setF] = useState({ name: "", address: "", property_type: "apartment", monthly_rent: "", tenants: "0", photo_path: null as string | null });
+  const [f, setF] = useState({ name: "", address: "", country: "", property_type: "apartment", monthly_rent: "", tenants: "0", photo_path: null as string | null });
 
   useEffect(() => {
     if (open)
       setF({
         name: property?.name ?? "",
         address: property?.address ?? "",
+        country: property?.country ?? "",
         property_type: property?.property_type ?? "apartment",
         monthly_rent: property ? String(property.monthly_rent) : "",
         tenants: String(property?.tenants ?? 0),
@@ -43,6 +45,7 @@ export function PropertySheet({
     const row = {
       name: f.name.trim(),
       address: f.address.trim(),
+      country: f.country.trim() || null,
       property_type: f.property_type,
       monthly_rent: Number(f.monthly_rent.replace(",", ".")) || 0,
       tenants: Number(f.tenants) || 0,
@@ -89,9 +92,14 @@ export function PropertySheet({
       <Field label="Address">
         <Input className={inputLg} value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} placeholder="Street, city" />
       </Field>
-      <Field label="Type">
-        <NativeSelect options={PROPERTY_TYPES} value={f.property_type} onChange={(e) => setF({ ...f, property_type: e.target.value })} />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Country">
+          <NativeSelect options={countryChoices(f.country)} value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} />
+        </Field>
+        <Field label="Type">
+          <NativeSelect options={PROPERTY_TYPES} value={f.property_type} onChange={(e) => setF({ ...f, property_type: e.target.value })} />
+        </Field>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Monthly rent (€)">
           <Input className={inputLg} inputMode="decimal" value={f.monthly_rent} onChange={(e) => setF({ ...f, monthly_rent: e.target.value })} placeholder="0,00" />

@@ -1,0 +1,85 @@
+/** ISO alpha-2 country code -> display name. Used by the property form and the dashboard country filter. */
+export const COUNTRIES: Record<string, string> = {
+  AL: "Albania",
+  AR: "Argentina",
+  AT: "Austria",
+  AU: "Australia",
+  BA: "Bosnia and Herzegovina",
+  BE: "Belgium",
+  BG: "Bulgaria",
+  BH: "Bahrain",
+  BR: "Brazil",
+  CA: "Canada",
+  CH: "Switzerland",
+  CN: "China",
+  CO: "Colombia",
+  CY: "Cyprus",
+  CZ: "Czechia",
+  DE: "Germany",
+  DK: "Denmark",
+  EE: "Estonia",
+  EG: "Egypt",
+  ES: "Spain",
+  FI: "Finland",
+  FR: "France",
+  GB: "United Kingdom",
+  GE: "Georgia",
+  GR: "Greece",
+  HR: "Croatia",
+  HU: "Hungary",
+  IE: "Ireland",
+  IL: "Israel",
+  IN: "India",
+  IS: "Iceland",
+  IT: "Italy",
+  JO: "Jordan",
+  JP: "Japan",
+  KR: "South Korea",
+  LT: "Lithuania",
+  LU: "Luxembourg",
+  LV: "Latvia",
+  MA: "Morocco",
+  MC: "Monaco",
+  MD: "Moldova",
+  ME: "Montenegro",
+  MK: "North Macedonia",
+  MT: "Malta",
+  MX: "Mexico",
+  NL: "Netherlands",
+  NO: "Norway",
+  NZ: "New Zealand",
+  PL: "Poland",
+  PT: "Portugal",
+  RO: "Romania",
+  RS: "Serbia",
+  SE: "Sweden",
+  SG: "Singapore",
+  SI: "Slovenia",
+  SK: "Slovakia",
+  SM: "San Marino",
+  TH: "Thailand",
+  TN: "Tunisia",
+  TR: "Türkiye",
+  UA: "Ukraine",
+  US: "United States",
+  XK: "Kosovo",
+  ZA: "South Africa",
+};
+
+/** Falls back to the stored value so a country outside the list still reads correctly. */
+export function countryLabel(code: string | null | undefined) {
+  if (!code) return "";
+  return COUNTRIES[code] ?? code;
+}
+
+/** Sorted [code, name] pairs for a select. */
+export function countryOptions() {
+  return Object.entries(COUNTRIES).sort((a, b) => a[1].localeCompare(b[1])) as [string, string][];
+}
+
+/** Country select options for a form; keeps an already-saved value that isn't in the list. */
+export function countryChoices(current?: string | null): [string, string][] {
+  const list = countryOptions();
+  if (current && !COUNTRIES[current]) return [["", "Not set"], [current, current], ...list];
+  return [["", "Not set"], ...list];
+}

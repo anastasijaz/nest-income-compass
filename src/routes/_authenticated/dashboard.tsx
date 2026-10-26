@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Building2, CalendarDays, ListChecks, LogOut, Plus, Users, UsersRound, Wrench } from "lucide-react";
+import { AlertTriangle, Building2, CalendarDays, Filter, ListChecks, LogOut, Plus, Users, UsersRound, Wrench, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { PeriodFilter } from "@/components/app/PeriodFilter";
@@ -11,6 +11,9 @@ import { QuickAdd } from "@/components/app/QuickAdd";
 import { CoverageBadge, CoverageBar } from "@/components/app/Status";
 import { formatEUR, inRange, isOverdue, periodRange, PROPERTY_TYPES, summarize, type Period } from "@/lib/finance";
 import { fixesQuery, propertiesQuery, taxesQuery, transactionsQuery, type Property } from "@/lib/queries";
+import { PropertyFilterBar } from "@/components/app/PropertyFilter";
+import { countryFilterOptions, EMPTY_FILTER, filterProperties, isFilterActive, type PropertyFilter } from "@/lib/property-filter";
+import { countryLabel } from "@/lib/countries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -30,6 +33,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const [period, setPeriod] = useState<Period>({ key: "month" });
   const [adding, setAdding] = useState(false);
+  const [filter, setFilter] = useState<PropertyFilter>(EMPTY_FILTER);
   const props = useQuery(propertiesQuery);
   const txns = useQuery(transactionsQuery);
   const fixes = useQuery(fixesQuery);
@@ -38,6 +42,23 @@ function Dashboard() {
   const range = periodRange(period);
   const inPeriod = useMemo(() => (txns.data ?? []).filter((t) => inRange(t.date, range)), [txns.data, range.from, range.to]);
   const total = summarize(inPeriod);
+
+  const netBy = useMemo(() => {
+    const groups = new Map<string, { kind: string; amount: number; date: string }[]>();
+    for (const t of inPeriod) {
+      const id = t.property_id ?? "";
+      const list = groups.get(id);
+      if (list) list.push(t);
+      else groups.set(id, [t]);
+    }
+    return new Map([...groups].map(([id, list]) => [id, summarize(list).net]));
+  }, [inPeriod]);
+
+  const visible = useMemo(
+    () => filterProperties(props.data ?? [], filter, (p) => netBy.get(p.id) ?? 0),
+    [props.data, filter, netBy],
+  );
+  const countries = useMemo(() => countryFilterOptions(props.data ?? []), [props.data]);
 
   async function signOut() {
     await qc.cancelQueries();
@@ -88,6 +109,11 @@ function Dashboard() {
         <PeriodFilter value={period} onChange={setPeriod} />
       </div>
 
+      {!!props.data?.length && (
+        <PropertyFilterBar value={filter} onChange={setFilter} countryOptions={countries} shown={visible.length} total={props.data.length} />
+      )}
+
+
       {props.isLoading ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1].map((i) => (
@@ -103,9 +129,18 @@ function Dashboard() {
             <Plus className="h-4 w-4" /> Add property
           </Button>
         </div>
+      ) : !visible.length ? (
+        <div className="mt-10 flex flex-col items-center rounded-3xl border border-dashed bg-card px-6 py-14 text-center">
+          <Filter className="h-10 w-10 text-muted-foreground" />
+          <h2 className="mt-4 text-lg font-semibold">No properties match</h2>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">Nothing fits the filters you picked. Try widening them.</p>
+          <Button className="mt-6 h-12 rounded-xl px-6" onClick={() => setFilter(EMPTY_FILTER)}>
+            <X className="h-4 w-4" /> Clear filters
+          </Button>
+        </div>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {props.data.map((p) => (
+          {visible.map((p) => (
             <PropertyCard
               key={p.id}
               p={p}
@@ -150,7 +185,9 @@ function PropertyCard({ p, txns, openFixes, overdue }: { p: Property; txns: { ki
               {PROPERTY_TYPES[p.property_type as keyof typeof PROPERTY_TYPES] ?? p.property_type}
             </span>
           </div>
-          {p.address && <p className="mt-0.5 truncate text-sm text-muted-foreground">{p.address}</p>}
+          {(p.address || p.country) && (
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">{[p.address, countryLabel(p.country)].filter(Boolean).join(", ")}</p>
+          )}
           <div className="mt-2 flex gap-4 text-sm">
             <span className="tabular">{formatEUR(Number(p.monthly_rent))}/mo</span>
             <span className="flex items-center gap-1 text-muted-foreground">

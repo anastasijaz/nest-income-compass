@@ -48,23 +48,23 @@ function Dashboard() {
 
   return (
     <div className="mx-auto min-h-dvh max-w-6xl px-4 pb-32 pt-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Properties</h1>
-        <div className="flex items-center gap-1">
-          <Button onClick={() => setAdding(true)} className="h-11 rounded-xl">
-            <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Add property</span>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-semibold">Properties</h1>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setAdding(true)} className="h-14 rounded-2xl px-5 text-base">
+            <Plus className="h-5 w-5" /> <span className="hidden sm:inline">Add property</span>
           </Button>
-          <Button asChild variant="ghost" size="icon" className="h-11 w-11" aria-label="Tasks">
-            <Link to="/tasks"><ListChecks className="h-5 w-5" /></Link>
+          <Button asChild variant="ghost" size="icon" className="h-14 w-14" aria-label="Tasks">
+            <Link to="/tasks"><ListChecks className="h-7 w-7" /></Link>
           </Button>
-          <Button asChild variant="ghost" size="icon" className="h-11 w-11" aria-label="Visits calendar">
-            <Link to="/calendar"><CalendarDays className="h-5 w-5" /></Link>
+          <Button asChild variant="ghost" size="icon" className="h-14 w-14" aria-label="Visits calendar">
+            <Link to="/calendar"><CalendarDays className="h-7 w-7" /></Link>
           </Button>
-          <Button asChild variant="ghost" size="icon" className="h-11 w-11" aria-label="Team">
-            <Link to="/team"><UsersRound className="h-5 w-5" /></Link>
+          <Button asChild variant="ghost" size="icon" className="h-14 w-14" aria-label="Team">
+            <Link to="/team"><UsersRound className="h-7 w-7" /></Link>
           </Button>
-          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={signOut} aria-label="Sign out">
-            <LogOut className="h-5 w-5" />
+          <Button variant="ghost" size="icon" className="h-14 w-14" onClick={signOut} aria-label="Sign out">
+            <LogOut className="h-7 w-7" />
           </Button>
         </div>
       </header>

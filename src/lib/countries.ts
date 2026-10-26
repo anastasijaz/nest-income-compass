@@ -76,3 +76,10 @@ export function countryLabel(code: string | null | undefined) {
 export function countryOptions() {
   return Object.entries(COUNTRIES).sort((a, b) => a[1].localeCompare(b[1])) as [string, string][];
 }
+
+/** Country select options for a form; keeps an already-saved value that isn't in the list. */
+export function countryChoices(current?: string | null): [string, string][] {
+  const list = countryOptions();
+  if (current && !COUNTRIES[current]) return [["", "Not set"], [current, current], ...list];
+  return [["", "Not set"], ...list];
+}

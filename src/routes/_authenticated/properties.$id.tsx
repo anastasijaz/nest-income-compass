@@ -205,14 +205,18 @@ function TransactionsTab({ propertyId, txns, fixedExpense = false }: { propertyI
   const [sheet, setSheet] = useState<{ kind: TxnKind; txn?: Transaction; startScan?: boolean } | null>(null);
   return (
     <>
-      <div className="mb-3 grid grid-cols-2 gap-2">
-        {!fixedExpense && <Button variant="outline" className="h-12 rounded-xl" onClick={() => setSheet({ kind: "income" })}>
-          <Plus className="h-4 w-4" /> Income
-        </Button>}
-        <Button variant="outline" className="h-12 rounded-xl" onClick={() => setSheet({ kind: "cost" })}>
-          <Plus className="h-4 w-4" /> {fixedExpense ? "Add expense" : "Cost"}
+      <div className="mb-3 flex flex-wrap gap-2">
+        {!fixedExpense && (
+          <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full px-4 text-sm" onClick={() => setSheet({ kind: "income" })}>
+            <Plus className="h-3.5 w-3.5" /> Income
+          </Button>
+        )}
+        <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full px-4 text-sm" onClick={() => setSheet({ kind: "cost" })}>
+          <Plus className="h-3.5 w-3.5" /> {fixedExpense ? "Add expense" : "Cost"}
         </Button>
-        <Button variant="outline" className={cn("h-12 rounded-xl", !fixedExpense && "col-span-2")} onClick={() => setSheet({ kind: "cost", startScan: true })}><Receipt className="h-4 w-4" /> Scan receipt</Button>
+        <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full px-4 text-sm" onClick={() => setSheet({ kind: "cost", startScan: true })}>
+          <Receipt className="h-3.5 w-3.5" /> Scan receipt
+        </Button>
       </div>
       {txns.length === 0 ? (
         <Empty icon={<Receipt className="h-8 w-8" />} title={fixedExpense ? "No fixed expenses in this period" : "No transactions in this period"} text={fixedExpense ? "" : "Add rent you've received or a cost you've paid. You can also scan a receipt."} />
@@ -323,11 +327,13 @@ function TaxesTab({ propertyId, taxes }: { propertyId: string; taxes: Tax[] }) {
   const [pay, setPay] = useState<Tax | null>(null);
   return (
     <>
-      <div className="mb-3 grid grid-cols-2 gap-2">
-      <Button variant="outline" className="h-12 rounded-xl" onClick={() => setEdit({})}>
-        <Plus className="h-4 w-4" /> Add tax
-      </Button>
-      <Button variant="outline" className="h-12 rounded-xl" onClick={() => setEdit({ startScan: true })}><Receipt className="h-4 w-4" /> Scan receipt</Button>
+      <div className="mb-3 flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full px-4 text-sm" onClick={() => setEdit({})}>
+          <Plus className="h-3.5 w-3.5" /> Add tax
+        </Button>
+        <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full px-4 text-sm" onClick={() => setEdit({ startScan: true })}>
+          <Receipt className="h-3.5 w-3.5" /> Scan receipt
+        </Button>
       </div>
       {taxes.length === 0 ? (
         <Empty icon={<Landmark className="h-8 w-8" />} title="No taxes yet" text="Add Grundsteuer or income tax with its due date and you'll be warned when it's overdue." />

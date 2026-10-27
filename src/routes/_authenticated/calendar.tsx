@@ -79,14 +79,23 @@ function CalendarPage() {
         </Button>
       </header>
 
-      <div className="flex justify-center rounded-2xl border bg-card p-2 shadow-card">
+      <div className="rounded-2xl border bg-card p-2 shadow-card">
         <Calendar
           mode="multiple"
           selected={[]}
           modifiers={modifiers}
           modifiersClassNames={modifiersClassNames}
           onSelect={() => {}}
-          className="pointer-events-auto p-3"
+          className="pointer-events-auto w-full bg-transparent p-2 [--cell-size:2.75rem] sm:p-4 sm:[--cell-size:3.5rem]"
+          classNames={{
+            root: "w-full",
+            months: "relative flex w-full flex-col",
+            month: "flex w-full flex-col gap-4",
+            month_caption: "flex h-(--cell-size) w-full items-center justify-center text-lg font-semibold",
+            caption_label: "select-none text-lg font-semibold",
+            weekday: "flex-1 select-none text-sm font-medium text-muted-foreground",
+            day: "group/day relative h-auto flex-1 select-none p-0.5 text-center",
+          }}
         />
       </div>
       <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -178,6 +187,7 @@ function VisitSheet({ visit, open, onOpenChange }: { visit?: Visit | undefined; 
 
   return (
     <FormSheet
+      centered
       open={open}
       onOpenChange={onOpenChange}
       title={visit ? "Edit visit" : "Add visit"}

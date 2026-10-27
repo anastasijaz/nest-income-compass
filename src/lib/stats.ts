@@ -28,7 +28,7 @@ export function computeStats(txns: StatTxn[], properties: { id: string; name: st
   });
   const firstLoss = monthly.findIndex((m) => m.cumulative < 0);
   if (firstLoss === -1) breakEvenMonth = monthly.length ? "always" : null;
-  else if (monthly[monthly.length - 1].cumulative < 0) breakEvenMonth = null;
+  else if ((monthly[monthly.length - 1]?.cumulative ?? 0) < 0) breakEvenMonth = null;
 
   const perProperty = properties
     .map((p) => {

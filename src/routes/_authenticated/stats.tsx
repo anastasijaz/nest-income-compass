@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/stats")({
   component: StatsPage,
 });
 
-function Tile({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
+function Tile({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" | undefined }) {
   return (
     <div className="rounded-2xl border bg-card p-4 shadow-card">
       <div className="text-xs text-muted-foreground">{label}</div>

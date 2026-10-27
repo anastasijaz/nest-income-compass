@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Building2, CalendarDays, Filter, ListChecks, LogOut, Plus, Users, UsersRound, Wrench, X } from "lucide-react";
+import { AlertTriangle, BarChart3, Building2, CalendarDays, Filter, ListChecks, LogOut, Plus, Users, UsersRound, Wrench, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { PeriodFilter } from "@/components/app/PeriodFilter";
@@ -73,16 +73,19 @@ function Dashboard() {
         <h1 className="text-3xl font-semibold">Properties</h1>
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="icon" className="h-16 w-16 [&_svg]:size-9" aria-label="Tasks">
-            <Link to="/tasks"><ListChecks /></Link>
+            <Link to="/tasks"><ListChecks strokeWidth={1.5} /></Link>
+          </Button>
+          <Button asChild variant="ghost" size="icon" className="h-16 w-16 [&_svg]:size-9" aria-label="Stats">
+            <Link to="/stats"><BarChart3 strokeWidth={1.5} /></Link>
           </Button>
           <Button asChild variant="ghost" size="icon" className="h-16 w-16 [&_svg]:size-9" aria-label="Visits calendar">
-            <Link to="/calendar"><CalendarDays /></Link>
+            <Link to="/calendar"><CalendarDays strokeWidth={1.5} /></Link>
           </Button>
           <Button asChild variant="ghost" size="icon" className="h-16 w-16 [&_svg]:size-9" aria-label="Team">
-            <Link to="/team"><UsersRound /></Link>
+            <Link to="/team"><UsersRound strokeWidth={1.5} /></Link>
           </Button>
           <Button variant="ghost" size="icon" className="h-16 w-16 [&_svg]:size-9" onClick={signOut} aria-label="Sign out">
-            <LogOut />
+            <LogOut strokeWidth={1.5} />
           </Button>
         </div>
       </header>

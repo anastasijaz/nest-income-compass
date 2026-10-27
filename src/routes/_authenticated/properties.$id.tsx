@@ -265,7 +265,7 @@ function FixesTab({ propertyId, fixes }: { propertyId: string; fixes: Fix[] }) {
   const sorted = [...fixes].sort((a, b) => (a.status === b.status ? 0 : a.status === "todo" ? -1 : 1));
   return (
     <>
-      <Button variant="outline" className="mb-3 h-12 w-full rounded-xl" onClick={() => setEdit({})}>
+      <Button variant="outline" size="sm" className="mb-3 h-9 rounded-xl px-4" onClick={() => setEdit({})}>
         <Plus className="h-4 w-4" /> Add fix
       </Button>
       {fixes.length === 0 ? (

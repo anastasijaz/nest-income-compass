@@ -2,7 +2,19 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, ArrowLeft, Building2, Check, Pencil, Plus, Receipt, RotateCcw, Users, Wrench, Landmark } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  Check,
+  Pencil,
+  Plus,
+  Receipt,
+  RotateCcw,
+  Users,
+  Wrench,
+  Landmark,
+} from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,12 +25,14 @@ import { PropertySheet } from "@/components/app/PropertySheet";
 import { QuickAdd } from "@/components/app/QuickAdd";
 import { CoverageBadge, CoverageBar } from "@/components/app/Status";
 import { TransactionSheet, type TxnKind } from "@/components/app/TransactionSheet";
-import { CompleteFixSheet, FixSheet, reopenFix } from "@/components/app/FixSheets";
-import { PayTaxSheet, TaxSheet, unpayTax } from "@/components/app/TaxSheets";
+import { CompleteFixSheet, FixSheet } from "@/components/app/FixSheets";
+import { reopenFix, unpayTax } from "@/lib/undo-actions";
+import { PayTaxSheet, TaxSheet } from "@/components/app/TaxSheets";
 import {
   categoryLabel,
   formatEUR,
   inRange,
+  kEUR,
   isOverdue,
   monthlyBuckets,
   periodRange,
@@ -28,10 +42,22 @@ import {
   todayISO,
   type Period,
 } from "@/lib/finance";
-import { fixesQuery, memberName, membersQuery, propertiesQuery, taxesQuery, transactionsQuery, useRefresh, type Fix, type Tax, type Transaction } from "@/lib/queries";
+import {
+  fixesQuery,
+  memberName,
+  membersQuery,
+  propertiesQuery,
+  taxesQuery,
+  transactionsQuery,
+  useRefresh,
+  type Fix,
+  type Tax,
+  type Transaction,
+} from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { isFixedExpense } from "@/lib/fixed-expenses";
 import { TenantRents } from "@/components/app/TenantRents";
+import { pickImage } from "@/lib/files";
 
 export const Route = createFileRoute("/_authenticated/properties/$id")({
   head: () => ({
@@ -60,15 +86,18 @@ function PropertyPage() {
   const taxesQ = useQuery(taxesQuery);
   const p = props.data?.find((x) => x.id === id);
 
-  const allTxns = useMemo(() => (txnsQ.data ?? []).filter((t) => t.property_id === id), [txnsQ.data, id]);
-  const range = periodRange(period);
-  const txns = useMemo(() => allTxns.filter((t) => inRange(t.date, range)), [allTxns, range.from, range.to]);
+  const allTxns = useMemo(
+    () => (txnsQ.data ?? []).filter((t) => t.property_id === id),
+    [txnsQ.data, id],
+  );
+  const range = useMemo(() => periodRange(period), [period]);
+  const txns = useMemo(() => allTxns.filter((t) => inRange(t.date, range)), [allTxns, range]);
   const s = summarize(txns);
   const chart = useMemo(() => {
     const from = range.from ?? allTxns[allTxns.length - 1]?.date ?? todayISO();
     const to = range.to ?? todayISO();
     return from <= to ? monthlyBuckets(txns, from, to) : [];
-  }, [txns, allTxns, range.from, range.to]);
+  }, [txns, allTxns, range]);
 
   if (props.isLoading) return <div className="mx-auto h-72 max-w-3xl animate-pulse bg-muted" />;
   if (!p)
@@ -85,14 +114,27 @@ function PropertyPage() {
   const taxes = (taxesQ.data ?? []).filter((t) => t.property_id === id);
 
   return (
-    <div className="mx-auto min-h-dvh max-w-3xl pb-32">
+    <div className="mx-auto max-w-3xl pb-24">
       <div className="relative">
-        <Photo path={p.photo_path} alt={p.name} className="aspect-[16/9] max-h-72 w-full md:rounded-b-3xl" fallback={<Building2 className="h-10 w-10" />} />
+        <Photo
+          path={p.photo_path}
+          alt={p.name}
+          className="aspect-[16/9] max-h-72 w-full md:rounded-b-3xl"
+          fallback={<Building2 className="h-10 w-10" />}
+        />
         <div className="absolute inset-x-0 top-0 flex justify-between p-4">
-          <Link to="/dashboard" aria-label="Back" className="flex h-14 w-14 items-center justify-center rounded-full bg-card/95 shadow-card">
+          <Link
+            to="/dashboard"
+            aria-label="Back"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-card/95 shadow-card"
+          >
             <ArrowLeft className="h-7 w-7" />
           </Link>
-          <button onClick={() => setEditing(true)} aria-label="Edit property" className="flex h-14 w-14 items-center justify-center rounded-full bg-card/95 shadow-card">
+          <button
+            onClick={() => setEditing(true)}
+            aria-label="Edit property"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-card/95 shadow-card"
+          >
             <Pencil className="h-6 w-6" />
           </button>
         </div>
@@ -117,71 +159,133 @@ function PropertyPage() {
 
         <Tabs value={section} onValueChange={setSection}>
           <TabsList className="grid h-12 w-full grid-cols-2">
-            <TabsTrigger value="finance" className="h-10"><Landmark className="h-4 w-4" /> Finance</TabsTrigger>
-            <TabsTrigger value="fixes" className="h-10"><Wrench className="h-4 w-4" /> Fixes</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {section === "finance" ? <>
-        <TenantRents propertyId={p.id} tenants={p.tenants} />
-        <PeriodFilter value={period} onChange={setPeriod} />
-
-        <section className="space-y-4 rounded-2xl border bg-card p-4 shadow-card">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Net result</p>
-              <p className={cn("tabular text-3xl font-semibold", s.net < 0 && "text-destructive")}>{formatEUR(s.net)}</p>
-            </div>
-            <CoverageBadge covering={s.covering} />
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-sm bg-chart-income" /> Income <span className="tabular ml-auto font-medium">{formatEUR(s.income)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-sm bg-chart-cost" /> Costs <span className="tabular ml-auto font-medium">{formatEUR(s.costs)}</span>
-            </div>
-          </div>
-          <CoverageBar coverage={s.coverage} covering={s.covering} hasCosts={s.costs > 0} />
-          {chart.length > 0 && (
-            <div className="-ml-2 h-52">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chart} barGap={2}>
-                  <CartesianGrid vertical={false} stroke="var(--border)" />
-                  <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} stroke="var(--muted-foreground)" />
-                  <YAxis tickLine={false} axisLine={false} fontSize={11} width={48} stroke="var(--muted-foreground)" tickFormatter={(v) => `${Math.round(v / 100) / 10}k`} />
-                  <Tooltip
-                    cursor={{ fill: "var(--muted)" }}
-                    formatter={(v: number) => formatEUR(v)}
-                    contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }}
-                  />
-                  <Bar dataKey="income" name="Income" fill="var(--chart-income)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="costs" name="Costs" fill="var(--chart-cost)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </section>
-
-        <Tabs defaultValue="transactions">
-          <TabsList className="grid h-auto min-h-12 w-full grid-cols-3 rounded-xl">
-            <TabsTrigger value="transactions" className="h-12 min-w-0 whitespace-normal rounded-lg px-1 text-xs sm:text-sm">Transactions</TabsTrigger>
-            <TabsTrigger value="fixed-expenses" className="h-12 min-w-0 whitespace-normal rounded-lg px-1 text-xs sm:text-sm">Fixed expenses</TabsTrigger>
-            <TabsTrigger value="taxes" className="h-10 rounded-lg">
-              Taxes {taxes.some((t) => isOverdue(t)) && <AlertTriangle className="ml-1 h-3.5 w-3.5 text-destructive" />}
+            <TabsTrigger value="finance" className="h-10">
+              <Landmark className="h-4 w-4" /> Finance
+            </TabsTrigger>
+            <TabsTrigger value="fixes" className="h-10">
+              <Wrench className="h-4 w-4" /> Fixes
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="transactions" className="mt-4">
-            <TransactionsTab propertyId={id} txns={txns.filter((t) => !isFixedExpense(t))} />
-          </TabsContent>
-          <TabsContent value="fixed-expenses" className="mt-4">
-            <TransactionsTab propertyId={id} txns={txns.filter(isFixedExpense)} fixedExpense />
-          </TabsContent>
-          <TabsContent value="taxes" className="mt-4">
-            <TaxesTab propertyId={id} taxes={taxes} />
-          </TabsContent>
         </Tabs>
-        </> : <section aria-label="Property fixes"><FixesTab propertyId={id} fixes={fixes} /></section>}
+
+        {section === "finance" ? (
+          <>
+            <TenantRents propertyId={p.id} tenants={p.tenants} />
+            <PeriodFilter value={period} onChange={setPeriod} />
+
+            <section className="space-y-4 rounded-2xl border bg-card p-4 shadow-card">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Net result</p>
+                  <p
+                    className={cn(
+                      "tabular text-3xl font-semibold",
+                      s.net < 0 && "text-destructive",
+                    )}
+                  >
+                    {formatEUR(s.net)}
+                  </p>
+                </div>
+                <CoverageBadge covering={s.covering} />
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-sm bg-chart-income" /> Income{" "}
+                  <span className="tabular ml-auto font-medium">{formatEUR(s.income)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-sm bg-chart-cost" /> Costs{" "}
+                  <span className="tabular ml-auto font-medium">{formatEUR(s.costs)}</span>
+                </div>
+              </div>
+              <CoverageBar coverage={s.coverage} covering={s.covering} hasCosts={s.costs > 0} />
+              {chart.length > 0 && (
+                <div className="-ml-2 h-52">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chart} barGap={2}>
+                      <CartesianGrid vertical={false} stroke="var(--border)" />
+                      <XAxis
+                        dataKey="label"
+                        tickLine={false}
+                        axisLine={false}
+                        fontSize={11}
+                        stroke="var(--muted-foreground)"
+                      />
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        fontSize={11}
+                        width={48}
+                        stroke="var(--muted-foreground)"
+                        tickFormatter={kEUR}
+                      />
+                      <Tooltip
+                        cursor={{ fill: "var(--muted)" }}
+                        formatter={(v: number) => formatEUR(v)}
+                        contentStyle={{
+                          borderRadius: 12,
+                          border: "1px solid var(--border)",
+                          background: "var(--card)",
+                        }}
+                      />
+                      <Bar
+                        dataKey="income"
+                        name="Income"
+                        fill="var(--chart-income)"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="costs"
+                        name="Costs"
+                        fill="var(--chart-cost)"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </section>
+
+            <Tabs defaultValue="transactions">
+              <TabsList className="grid h-auto min-h-12 w-full grid-cols-3 rounded-xl">
+                <TabsTrigger
+                  value="transactions"
+                  className="h-12 min-w-0 whitespace-normal rounded-lg px-1 text-xs sm:text-sm"
+                >
+                  Transactions
+                </TabsTrigger>
+                <TabsTrigger
+                  value="fixed-expenses"
+                  className="h-12 min-w-0 whitespace-normal rounded-lg px-1 text-xs sm:text-sm"
+                >
+                  Fixed expenses
+                </TabsTrigger>
+                <TabsTrigger
+                  value="taxes"
+                  className="h-12 min-w-0 rounded-lg px-1 text-xs sm:text-sm"
+                >
+                  Taxes{" "}
+                  {taxes.some((t) => isOverdue(t)) && (
+                    <AlertTriangle className="ml-1 h-3.5 w-3.5 text-destructive" />
+                  )}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="transactions" className="mt-4">
+                <TransactionsTab propertyId={id} txns={txns.filter((t) => !isFixedExpense(t))} />
+              </TabsContent>
+              <TabsContent value="fixed-expenses" className="mt-4">
+                <TransactionsTab propertyId={id} txns={txns.filter(isFixedExpense)} fixedExpense />
+              </TabsContent>
+              <TabsContent value="taxes" className="mt-4">
+                <TaxesTab propertyId={id} taxes={taxes} />
+              </TabsContent>
+            </Tabs>
+          </>
+        ) : (
+          <section aria-label="Property fixes">
+            <FixesTab propertyId={id} fixes={fixes} />
+          </section>
+        )}
       </div>
 
       <PropertySheet open={editing} onOpenChange={setEditing} property={p} />
@@ -190,7 +294,17 @@ function PropertyPage() {
   );
 }
 
-function Empty({ icon, title, text, children }: { icon: React.ReactNode; title: string; text: string; children?: React.ReactNode }) {
+function Empty({
+  icon,
+  title,
+  text,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+  children?: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col items-center rounded-2xl border border-dashed bg-card px-6 py-10 text-center">
       <div className="text-muted-foreground">{icon}</div>
@@ -201,35 +315,82 @@ function Empty({ icon, title, text, children }: { icon: React.ReactNode; title: 
   );
 }
 
-function TransactionsTab({ propertyId, txns, fixedExpense = false }: { propertyId: string; txns: Transaction[]; fixedExpense?: boolean }) {
-  const [sheet, setSheet] = useState<{ kind: TxnKind; txn?: Transaction; startScan?: boolean } | null>(null);
+function TransactionsTab({
+  propertyId,
+  txns,
+  fixedExpense = false,
+}: {
+  propertyId: string;
+  txns: Transaction[];
+  fixedExpense?: boolean;
+}) {
+  const [sheet, setSheet] = useState<{ kind: TxnKind; txn?: Transaction; scanFile?: File } | null>(
+    null,
+  );
   return (
     <>
       <div className="mb-3 flex flex-wrap gap-2">
         {!fixedExpense && (
-          <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full px-4 text-sm" onClick={() => setSheet({ kind: "income" })}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-11 gap-1.5 rounded-full px-4 text-sm"
+            onClick={() => setSheet({ kind: "income" })}
+          >
             <Plus className="h-3.5 w-3.5" /> Income
           </Button>
         )}
-        <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full px-4 text-sm" onClick={() => setSheet({ kind: "cost" })}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-11 gap-1.5 rounded-full px-4 text-sm"
+          onClick={() => setSheet({ kind: "cost" })}
+        >
           <Plus className="h-3.5 w-3.5" /> {fixedExpense ? "Add expense" : "Cost"}
         </Button>
-        <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full px-4 text-sm" onClick={() => setSheet({ kind: "cost", startScan: true })}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-11 gap-1.5 rounded-full px-4 text-sm"
+          onClick={() =>
+            void pickImage().then((file) => file && setSheet({ kind: "cost", scanFile: file }))
+          }
+        >
           <Receipt className="h-3.5 w-3.5" /> Scan receipt
         </Button>
       </div>
       {txns.length === 0 ? (
-        <Empty icon={<Receipt className="h-8 w-8" />} title={fixedExpense ? "No fixed expenses in this period" : "No transactions in this period"} text={fixedExpense ? "" : "Add rent you've received or a cost you've paid. You can also scan a receipt."} />
+        <Empty
+          icon={<Receipt className="h-8 w-8" />}
+          title={
+            fixedExpense ? "No fixed expenses in this period" : "No transactions in this period"
+          }
+          text={
+            fixedExpense
+              ? ""
+              : "Add rent you've received or a cost you've paid. You can also scan a receipt."
+          }
+        />
       ) : (
         <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
           {txns.map((t) => (
             <li key={t.id}>
-              <button className="flex w-full items-center gap-3 px-4 py-3 text-left" onClick={() => setSheet({ kind: t.kind as TxnKind, txn: t })}>
-                <Photo path={t.receipt_path} alt="Receipt" className="h-11 w-11 shrink-0 rounded-lg" fallback={<Receipt className="h-4 w-4" />} />
+              <button
+                className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                onClick={() => setSheet({ kind: t.kind as TxnKind, txn: t })}
+              >
+                <Photo
+                  path={t.receipt_path}
+                  alt="Receipt"
+                  className="h-11 w-11 shrink-0 rounded-lg"
+                  fallback={<Receipt className="h-4 w-4" />}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">
                     {categoryLabel(t.kind, t.category)}
-                    {t.vendor && <span className="font-normal text-muted-foreground"> · {t.vendor}</span>}
+                    {t.vendor && (
+                      <span className="font-normal text-muted-foreground"> · {t.vendor}</span>
+                    )}
                   </p>
                   <p className="truncate text-sm text-muted-foreground">
                     {fmtDate(t.date)}
@@ -246,7 +407,15 @@ function TransactionsTab({ propertyId, txns, fixedExpense = false }: { propertyI
           ))}
         </ul>
       )}
-      <TransactionSheet open={!!sheet} onOpenChange={(o) => !o && setSheet(null)} kind={sheet?.kind ?? "cost"} txn={sheet?.txn} propertyId={propertyId} fixedExpense={fixedExpense} startScan={sheet?.startScan} />
+      <TransactionSheet
+        open={!!sheet}
+        onOpenChange={(o) => !o && setSheet(null)}
+        kind={sheet?.kind ?? "cost"}
+        txn={sheet?.txn}
+        propertyId={propertyId}
+        fixedExpense={fixedExpense}
+        scanFile={sheet?.scanFile}
+      />
     </>
   );
 }
@@ -262,37 +431,89 @@ function FixesTab({ propertyId, fixes }: { propertyId: string; fixes: Fix[] }) {
   const [edit, setEdit] = useState<{ fix?: Fix } | null>(null);
   const [complete, setComplete] = useState<Fix | null>(null);
   const { data: members = [] } = useQuery(membersQuery);
-  const sorted = [...fixes].sort((a, b) => (a.status === b.status ? 0 : a.status === "todo" ? -1 : 1));
+  const sorted = [...fixes].sort((a, b) =>
+    a.status === b.status ? 0 : a.status === "todo" ? -1 : 1,
+  );
   return (
     <>
-      <Button variant="outline" size="sm" className="mb-3 h-9 rounded-xl px-4" onClick={() => setEdit({})}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="mb-3 h-11 rounded-xl px-4"
+        onClick={() => setEdit({})}
+      >
         <Plus className="h-4 w-4" /> Add fix
       </Button>
       {fixes.length === 0 ? (
-        <Empty icon={<Wrench className="h-8 w-8" />} title="Nothing to fix" text="Note repairs as they come up. When you mark one done, its cost is recorded automatically." />
+        <Empty
+          icon={<Wrench className="h-8 w-8" />}
+          title="Nothing to fix"
+          text="Note repairs as they come up. When you mark one done, its cost is recorded automatically."
+        />
       ) : (
         <ul className="space-y-2">
           {sorted.map((f) => (
-            <li key={f.id} className={cn("flex gap-3 rounded-2xl border bg-card p-3", f.status === "done" && "opacity-70")}>
-              <button className="flex min-w-0 flex-1 gap-3 text-left" onClick={() => setEdit({ fix: f })}>
-                <Photo path={f.photo_path} alt={f.title} className="h-14 w-14 shrink-0 rounded-xl" fallback={<Wrench className="h-5 w-5" />} />
+            <li
+              key={f.id}
+              className={cn(
+                "flex gap-3 rounded-2xl border bg-card p-3",
+                f.status === "done" && "opacity-70",
+              )}
+            >
+              <button
+                className="flex min-w-0 flex-1 gap-3 text-left"
+                onClick={() => setEdit({ fix: f })}
+              >
+                <Photo
+                  path={f.photo_path}
+                  alt={f.title}
+                  className="h-14 w-14 shrink-0 rounded-xl"
+                  fallback={<Wrench className="h-5 w-5" />}
+                />
                 <div className="min-w-0">
-                  <p className={cn("truncate font-medium", f.status === "done" && "line-through")}>{f.title}</p>
+                  <p className={cn("truncate font-medium", f.status === "done" && "line-through")}>
+                    {f.title}
+                  </p>
                   <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                    <span className={cn("rounded px-1.5 py-0.5 font-medium capitalize", PRIORITY_STYLE[f.priority])}>{f.priority}</span>
+                    <span
+                      className={cn(
+                        "rounded px-1.5 py-0.5 font-medium capitalize",
+                        PRIORITY_STYLE[f.priority],
+                      )}
+                    >
+                      {f.priority}
+                    </span>
                     <span>{fmtDate(f.created_at.slice(0, 10))}</span>
                     {f.status === "done"
                       ? f.completed_by && <span>Done by {memberName(members, f.completed_by)}</span>
-                      : f.assigned_to && <span className="font-medium text-foreground">→ {memberName(members, f.assigned_to)}</span>}
+                      : f.assigned_to && (
+                          <span className="font-medium text-foreground">
+                            → {memberName(members, f.assigned_to)}
+                          </span>
+                        )}
                     {f.status === "done"
-                      ? f.actual_cost != null && <span className="tabular">Paid {formatEUR(Number(f.actual_cost))}</span>
-                      : f.estimated_cost != null && <span className="tabular">Est. {formatEUR(Number(f.estimated_cost))}</span>}
+                      ? f.actual_cost != null && (
+                          <span className="tabular">Paid {formatEUR(Number(f.actual_cost))}</span>
+                        )
+                      : f.estimated_cost != null && (
+                          <span className="tabular">
+                            Est. {formatEUR(Number(f.estimated_cost))}
+                          </span>
+                        )}
                   </div>
-                  {f.description && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{f.description}</p>}
+                  {f.description && (
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {f.description}
+                    </p>
+                  )}
                 </div>
               </button>
               {f.status === "todo" ? (
-                <Button size="sm" className="h-11 shrink-0 self-center rounded-xl" onClick={() => setComplete(f)}>
+                <Button
+                  size="sm"
+                  className="h-11 shrink-0 self-center rounded-xl"
+                  onClick={() => setComplete(f)}
+                >
                   <Check className="h-4 w-4" /> Done
                 </Button>
               ) : (
@@ -315,7 +536,12 @@ function FixesTab({ propertyId, fixes }: { propertyId: string; fixes: Fix[] }) {
           ))}
         </ul>
       )}
-      <FixSheet open={!!edit} onOpenChange={(o) => !o && setEdit(null)} propertyId={propertyId} fix={edit?.fix} />
+      <FixSheet
+        open={!!edit}
+        onOpenChange={(o) => !o && setEdit(null)}
+        propertyId={propertyId}
+        fix={edit?.fix}
+      />
       <CompleteFixSheet fix={complete} onOpenChange={(o) => !o && setComplete(null)} />
     </>
   );
@@ -323,34 +549,63 @@ function FixesTab({ propertyId, fixes }: { propertyId: string; fixes: Fix[] }) {
 
 function TaxesTab({ propertyId, taxes }: { propertyId: string; taxes: Tax[] }) {
   const refresh = useRefresh();
-  const [edit, setEdit] = useState<{ tax?: Tax; startScan?: boolean } | null>(null);
+  const [edit, setEdit] = useState<{ tax?: Tax; scanFile?: File } | null>(null);
   const [pay, setPay] = useState<Tax | null>(null);
   return (
     <>
       <div className="mb-3 flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full px-4 text-sm" onClick={() => setEdit({})}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-11 gap-1.5 rounded-full px-4 text-sm"
+          onClick={() => setEdit({})}
+        >
           <Plus className="h-3.5 w-3.5" /> Add tax
         </Button>
-        <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full px-4 text-sm" onClick={() => setEdit({ startScan: true })}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-11 gap-1.5 rounded-full px-4 text-sm"
+          onClick={() => void pickImage().then((file) => file && setEdit({ scanFile: file }))}
+        >
           <Receipt className="h-3.5 w-3.5" /> Scan receipt
         </Button>
       </div>
       {taxes.length === 0 ? (
-        <Empty icon={<Landmark className="h-8 w-8" />} title="No taxes yet" text="Add Grundsteuer or income tax with its due date and you'll be warned when it's overdue." />
+        <Empty
+          icon={<Landmark className="h-8 w-8" />}
+          title="No taxes yet"
+          text="Add Grundsteuer or income tax with its due date and you'll be warned when it's overdue."
+        />
       ) : (
         <ul className="space-y-2">
           {taxes.map((t) => {
             const overdue = isOverdue(t);
             return (
-              <li key={t.id} className={cn("flex items-center gap-3 rounded-2xl border bg-card p-3", overdue && "border-destructive bg-destructive-soft")}>
+              <li
+                key={t.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-2xl border bg-card p-3",
+                  overdue && "border-destructive bg-destructive-soft",
+                )}
+              >
                 <button className="min-w-0 flex-1 text-left" onClick={() => setEdit({ tax: t })}>
                   <p className="flex items-center gap-1.5 font-medium">
                     {overdue && <AlertTriangle className="h-4 w-4 text-destructive" />}
-                    {t.tax_type === "other" ? t.label || "Other tax" : TAX_TYPES[t.tax_type as keyof typeof TAX_TYPES]}
+                    {t.tax_type === "other"
+                      ? t.label || "Other tax"
+                      : TAX_TYPES[t.tax_type as keyof typeof TAX_TYPES]}
                   </p>
-                  <p className={cn("text-sm text-muted-foreground", overdue && "font-medium text-destructive")}>
+                  <p
+                    className={cn(
+                      "text-sm text-muted-foreground",
+                      overdue && "font-medium text-destructive",
+                    )}
+                  >
                     <span className="tabular">{formatEUR(Number(t.amount))}</span> ·{" "}
-                    {t.status === "paid" && t.paid_at ? `Paid ${fmtDate(t.paid_at)}` : `${overdue ? "Overdue since" : "Due"} ${fmtDate(t.due_date)}`}
+                    {t.status === "paid" && t.paid_at
+                      ? `Paid ${fmtDate(t.paid_at)}`
+                      : `${overdue ? "Overdue since" : "Due"} ${fmtDate(t.due_date)}`}
                   </p>
                 </button>
                 {t.status === "paid" ? (
@@ -366,7 +621,12 @@ function TaxesTab({ propertyId, taxes }: { propertyId: string; taxes: Tax[] }) {
                     Paid ✓
                   </button>
                 ) : (
-                  <Button size="sm" variant={overdue ? "destructive" : "default"} className="h-11 shrink-0 rounded-xl" onClick={() => setPay(t)}>
+                  <Button
+                    size="sm"
+                    variant={overdue ? "destructive" : "default"}
+                    className="h-11 shrink-0 rounded-xl"
+                    onClick={() => setPay(t)}
+                  >
                     Mark paid
                   </Button>
                 )}
@@ -375,7 +635,13 @@ function TaxesTab({ propertyId, taxes }: { propertyId: string; taxes: Tax[] }) {
           })}
         </ul>
       )}
-      <TaxSheet open={!!edit} onOpenChange={(o) => !o && setEdit(null)} propertyId={propertyId} tax={edit?.tax} startScan={edit?.startScan} />
+      <TaxSheet
+        open={!!edit}
+        onOpenChange={(o) => !o && setEdit(null)}
+        propertyId={propertyId}
+        tax={edit?.tax}
+        scanFile={edit?.scanFile}
+      />
       <PayTaxSheet tax={pay} onOpenChange={(o) => !o && setPay(null)} />
     </>
   );

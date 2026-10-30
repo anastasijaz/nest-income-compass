@@ -2,8 +2,6 @@
 
 Build a simple, mobile-first web app for tracking rental properties: how much money each property makes and whether its income covers its costs. Keep it focused and leave out any extra wealth-management features.
 
-
-
 1. Properties dashboard
 
 - Grid of property cards. Each card shows: photo, name/nickname, address, property type (apartment, house, etc.), monthly rent, and number of tenants.
@@ -20,8 +18,6 @@ Build a simple, mobile-first web app for tracking rental properties: how much mo
 
 - "+ Add property" button.
 
-
-
 2. Property detail page
 
 - Header with the property's basic info (editable).
@@ -32,13 +28,9 @@ Build a simple, mobile-first web app for tracking rental properties: how much mo
 
 - Tabs: Transactions, Fixes, Taxes.
 
-
-
 3. Transactions tab
 
 - List of all income and costs with date, category, amount, note, and receipt thumbnail if attached. Edit and delete supported.
-
-
 
 Add income (manual):
 
@@ -46,23 +38,17 @@ Add income (manual):
 
 - Option to mark rent as recurring monthly so it auto-creates each month.
 
-
-
 Add cost (manual or receipt photo):
 
 - Manual entry: amount, date, category (repairs, maintenance, utilities, insurance, property tax, mortgage/loan, management fees, other), vendor, note.
 
 - "Scan receipt" button: opens the phone camera or file upload. Use AI to extract vendor, date, total amount, and suggest a category. Pre-fill the form so the user can review and correct before saving. Store the receipt image and link it to the transaction.
 
-
-
 4. Fixes tab
 
 - Each fix has: title, description, optional photo, priority (low / medium / high), date added, estimated cost, and status (To do / Done).
 
 - When a fix is marked Done, ask for the actual cost and completion date, and automatically create a cost transaction (with optional receipt photo).
-
-
 
 5. Taxes tab
 
@@ -72,8 +58,6 @@ Add cost (manual or receipt photo):
 
 - Highlight overdue unpaid taxes in red.
 
-
-
 6. Data & auth
 
 - Use Supabase for authentication (email login), database, file storage (receipts, property and fix photos), and edge functions (receipt AI parsing, recurring rent).
@@ -82,8 +66,6 @@ Add cost (manual or receipt photo):
 
 - Currency: EUR, formatted as 1.234,56 €.
 
-
-
 Design
 
 - Clean, modern, minimal. Neutral background; green/red used only for profit status and overdue warnings.
@@ -91,8 +73,6 @@ Design
 - Large touch targets and a floating "+" button on mobile for quick add (income / cost / scan receipt / fix).
 
 - Empty states with helpful prompts when there's no data yet.
-
-
 
 Build order: dashboard and property cards → manual income/cost entry → fixes and taxes → receipt scanning.
 

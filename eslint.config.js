@@ -36,5 +36,11 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    // shadcn/ui primitives export their cva variants next to components, and email templates
+    // are server-only (no fast refresh), so this dev-only warning doesn't apply there.
+    files: ["src/components/ui/**/*.tsx", "src/lib/email-templates/**/*.tsx"],
+    rules: { "react-refresh/only-export-components": "off" },
+  },
   eslintPluginPrettier,
 );

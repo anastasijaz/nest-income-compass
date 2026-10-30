@@ -9,7 +9,7 @@ import { loadEnv } from "vite";
 import path from "node:path";
 import { VitePWA } from "vite-plugin-pwa";
 
-Object.assign(process.env, loadEnv(process.env['NODE_ENV'] ?? 'development', process.cwd(), ''));
+Object.assign(process.env, loadEnv(process.env["NODE_ENV"] ?? "development", process.cwd(), ""));
 
 export default defineConfig({
   vite: {
@@ -19,6 +19,9 @@ export default defineConfig({
         registerType: "autoUpdate",
         injectRegister: null,
         filename: "sw.js",
+        // The client bundle is emitted straight to Nitro's public dir; without this the worker
+        // lands in an undeployed dist/ (so /sw.js 404s) and nothing gets precached.
+        outDir: ".output/public",
         devOptions: { enabled: false },
         includeAssets: ["favicon.ico", "icons/icon-192.png", "icons/icon-512.png"],
         manifest: {
@@ -33,7 +36,12 @@ export default defineConfig({
           icons: [
             { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
             { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-            { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+            {
+              src: "/icons/icon-512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable",
+            },
           ],
         },
         workbox: {
@@ -42,12 +50,14 @@ export default defineConfig({
           navigateFallbackDenylist: [/^\/~oauth/],
           runtimeCaching: [
             {
-              urlPattern: ({ request, url }) => request.mode === "navigate" && !url.pathname.startsWith("/~oauth"),
+              urlPattern: ({ request, url }) =>
+                request.mode === "navigate" && !url.pathname.startsWith("/~oauth"),
               handler: "NetworkFirst",
               options: { cacheName: "pages", networkTimeoutSeconds: 4 },
             },
             {
-              urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith("/assets/"),
+              urlPattern: ({ url, sameOrigin }) =>
+                sameOrigin && url.pathname.startsWith("/assets/"),
               handler: "CacheFirst",
               options: { cacheName: "assets", expiration: { maxEntries: 200 } },
             },

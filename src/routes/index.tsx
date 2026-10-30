@@ -6,13 +6,19 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Rentwise — Does your rental pay for itself?" },
-      { name: "description", content: "Simple mobile tracker for rental property income, costs, fixes and taxes." },
+      {
+        name: "description",
+        content: "Simple mobile tracker for rental property income, costs, fixes and taxes.",
+      },
       { property: "og:title", content: "Rentwise — Does your rental pay for itself?" },
-      { property: "og:description", content: "Simple mobile tracker for rental property income, costs, fixes and taxes." },
+      {
+        property: "og:description",
+        content: "Simple mobile tracker for rental property income, costs, fixes and taxes.",
+      },
     ],
   }),
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    throw redirect({ to: data.user ? "/dashboard" : "/auth" });
+    const { data } = await supabase.auth.getSession();
+    throw redirect({ to: data.session ? "/dashboard" : "/auth" });
   },
 });

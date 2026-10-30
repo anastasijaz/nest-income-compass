@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CalendarDays, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Plus, Trash2 } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,15 @@ import { Calendar } from "@/components/ui/calendar";
 import { FormSheet } from "@/components/app/FormSheet";
 import { Field, NativeSelect, inputLg } from "@/components/app/fields";
 import { todayISO } from "@/lib/finance";
-import { meQuery, memberName, membersQuery, propertiesQuery, useRefresh, visitsQuery, type Visit } from "@/lib/queries";
+import {
+  meQuery,
+  memberName,
+  membersQuery,
+  propertiesQuery,
+  useRefresh,
+  visitsQuery,
+  type Visit,
+} from "@/lib/queries";
 import { memberColor } from "@/lib/memberColor";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +50,11 @@ function CalendarPage() {
   const { modifiers, modifiersClassNames } = useMemo(() => {
     const owners = new Map<string, string[]>();
     for (const v of visits) {
-      for (let d = parseISO(v.start_date); d <= parseISO(v.end_date) && owners.size < 5000; d = addDays(d, 1)) {
+      for (
+        let d = parseISO(v.start_date);
+        d <= parseISO(v.end_date) && owners.size < 5000;
+        d = addDays(d, 1)
+      ) {
         const key = format(d, "yyyy-MM-dd");
         const ids = owners.get(key) ?? [];
         if (!ids.includes(v.user_id)) ids.push(v.user_id);
@@ -68,13 +80,14 @@ function CalendarPage() {
   const propName = (id: string) => properties.find((p) => p.id === id)?.name ?? "Property";
 
   return (
-    <div className="mx-auto min-h-dvh max-w-2xl space-y-5 px-4 pb-24 pt-6">
+    <div className="mx-auto max-w-2xl space-y-5 px-4 pb-8 pt-6">
       <header className="flex items-center gap-3">
-        <Link to="/dashboard" aria-label="Back" className="flex h-14 w-14 items-center justify-center rounded-full border bg-card">
-          <ArrowLeft className="h-7 w-7" />
-        </Link>
         <h1 className="flex-1 text-2xl font-semibold">Visits</h1>
-        <Button className="h-11 rounded-xl" onClick={() => setSheet({})} disabled={!properties.length}>
+        <Button
+          className="h-11 rounded-xl"
+          onClick={() => setSheet({})}
+          disabled={!properties.length}
+        >
           <Plus className="h-4 w-4" /> Add visit
         </Button>
       </header>
@@ -86,12 +99,13 @@ function CalendarPage() {
           modifiers={modifiers}
           modifiersClassNames={modifiersClassNames}
           onSelect={() => {}}
-          className="pointer-events-auto w-full bg-transparent p-2 [--cell-size:2.75rem] sm:p-4 sm:[--cell-size:3.5rem]"
+          className="pointer-events-auto w-full bg-transparent p-2 [--cell-size:2.5rem] sm:p-4 sm:[--cell-size:3.5rem]"
           classNames={{
             root: "w-full",
             months: "relative flex w-full flex-col",
             month: "flex w-full flex-col gap-4",
-            month_caption: "flex h-(--cell-size) w-full items-center justify-center text-lg font-semibold",
+            month_caption:
+              "flex h-(--cell-size) w-full items-center justify-center text-lg font-semibold",
             caption_label: "select-none text-lg font-semibold",
             weekday: "flex-1 select-none text-sm font-medium text-muted-foreground",
             day: "group/day relative h-auto flex-1 select-none p-0.5 text-center",
@@ -111,7 +125,10 @@ function CalendarPage() {
 
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">{showPast ? "All visits" : "Upcoming visits"}</h2>
-        <button className="h-11 px-2 text-sm text-muted-foreground underline" onClick={() => setShowPast(!showPast)}>
+        <button
+          className="h-11 px-2 text-sm text-muted-foreground underline"
+          onClick={() => setShowPast(!showPast)}
+        >
           {showPast ? "Hide past" : "Show past"}
         </button>
       </div>
@@ -120,20 +137,31 @@ function CalendarPage() {
         <div className="flex flex-col items-center rounded-2xl border border-dashed bg-card px-6 py-10 text-center">
           <CalendarDays className="h-8 w-8 text-muted-foreground" />
           <p className="mt-3 font-semibold">No visits planned</p>
-          <p className="mt-1 max-w-xs text-sm text-muted-foreground">Add the dates you'll be at a property so everyone knows who's going when.</p>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+            Add the dates you'll be at a property so everyone knows who's going when.
+          </p>
         </div>
       ) : (
         <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
           {shown.map((v) => (
             <li key={v.id}>
-              <button className="flex w-full items-center gap-3 px-4 py-3 text-left" onClick={() => setSheet({ visit: v })}>
-                <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", memberColor(v.user_id).dot)} />
+              <button
+                className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                onClick={() => setSheet({ visit: v })}
+              >
+                <span
+                  className={cn("h-2.5 w-2.5 shrink-0 rounded-full", memberColor(v.user_id).dot)}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">
-                    {memberName(members, v.user_id)} <span className="font-normal text-muted-foreground">at</span> {propName(v.property_id)}
+                    {memberName(members, v.user_id)}{" "}
+                    <span className="font-normal text-muted-foreground">at</span>{" "}
+                    {propName(v.property_id)}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {v.start_date === v.end_date ? fmt(v.start_date) : `${fmt(v.start_date)} – ${fmt(v.end_date)}`}
+                    {v.start_date === v.end_date
+                      ? fmt(v.start_date)
+                      : `${fmt(v.start_date)} – ${fmt(v.end_date)}`}
                   </p>
                 </div>
               </button>
@@ -147,13 +175,26 @@ function CalendarPage() {
   );
 }
 
-function VisitSheet({ visit, open, onOpenChange }: { visit?: Visit | undefined; open: boolean; onOpenChange: (o: boolean) => void }) {
+function VisitSheet({
+  visit,
+  open,
+  onOpenChange,
+}: {
+  visit?: Visit | undefined;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
   const refresh = useRefresh();
   const { data: properties = [] } = useQuery(propertiesQuery);
   const { data: members = [] } = useQuery(membersQuery);
   const { data: me = "" } = useQuery(meQuery);
   const [busy, setBusy] = useState(false);
-  const [f, setF] = useState({ property_id: "", user_id: "", start_date: todayISO(), end_date: todayISO() });
+  const [f, setF] = useState({
+    property_id: "",
+    user_id: "",
+    start_date: todayISO(),
+    end_date: todayISO(),
+  });
 
   useEffect(() => {
     if (open)
@@ -170,7 +211,9 @@ function VisitSheet({ visit, open, onOpenChange }: { visit?: Visit | undefined; 
     if (!f.property_id) return void toast.error("Choose a property");
     if (f.end_date < f.start_date) return void toast.error("End date must be after the start date");
     setBusy(true);
-    const { error } = visit ? await supabase.from("visits").update(f).eq("id", visit.id) : await supabase.from("visits").insert(f);
+    const { error } = visit
+      ? await supabase.from("visits").update(f).eq("id", visit.id)
+      : await supabase.from("visits").insert(f);
     setBusy(false);
     if (error) return void toast.error(error.message);
     toast.success("Visit saved");
@@ -195,24 +238,56 @@ function VisitSheet({ visit, open, onOpenChange }: { visit?: Visit | undefined; 
       busy={busy}
       extraActions={
         visit && (
-          <Button type="button" variant="outline" size="lg" className="h-12 rounded-xl" onClick={remove} aria-label="Delete visit">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-12 rounded-xl"
+            onClick={remove}
+            aria-label="Delete visit"
+          >
             <Trash2 className="h-5 w-5" />
           </Button>
         )
       }
     >
       <Field label="Property">
-        <NativeSelect options={properties.map((p) => [p.id, p.name] as [string, string])} value={f.property_id} onChange={(e) => setF({ ...f, property_id: e.target.value })} />
+        <NativeSelect
+          options={properties.map((p) => [p.id, p.name] as [string, string])}
+          value={f.property_id}
+          onChange={(e) => setF({ ...f, property_id: e.target.value })}
+        />
       </Field>
       <Field label="Who">
-        <NativeSelect options={members.map((m) => [m.user_id, m.display_name || "Member"] as [string, string])} value={f.user_id} onChange={(e) => setF({ ...f, user_id: e.target.value })} />
+        <NativeSelect
+          options={members.map((m) => [m.user_id, m.display_name || "Member"] as [string, string])}
+          value={f.user_id}
+          onChange={(e) => setF({ ...f, user_id: e.target.value })}
+        />
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="From">
-          <Input className={inputLg} type="date" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value, end_date: e.target.value > f.end_date ? e.target.value : f.end_date })} />
+          <Input
+            className={inputLg}
+            type="date"
+            value={f.start_date}
+            onChange={(e) =>
+              setF({
+                ...f,
+                start_date: e.target.value,
+                end_date: e.target.value > f.end_date ? e.target.value : f.end_date,
+              })
+            }
+          />
         </Field>
         <Field label="To">
-          <Input className={inputLg} type="date" value={f.end_date} min={f.start_date} onChange={(e) => setF({ ...f, end_date: e.target.value })} />
+          <Input
+            className={inputLg}
+            type="date"
+            value={f.end_date}
+            min={f.start_date}
+            onChange={(e) => setF({ ...f, end_date: e.target.value })}
+          />
         </Field>
       </div>
     </FormSheet>

@@ -6,6 +6,30 @@ export function formatEUR(n: number) {
   return eur.format(Number.isFinite(n) ? n : 0);
 }
 
+/** Short chart-axis label: 850 → "850", 12400 → "12.4k". */
+export function kEUR(n: number) {
+  return Math.abs(n) >= 1000 ? `${Math.round(n / 100) / 10}k` : String(Math.round(n));
+}
+
+/**
+ * Parses a typed euro amount. "1.234,56" and "1234,56" use the German format; without a comma,
+ * a single dot followed by 1–2 digits is a decimal point (phone keypads in English locales show "."),
+ * otherwise dots group thousands ("1.200" = 1200).
+ */
+export function parseAmount(s: string) {
+  const t = s.trim().replace(/[\s€]/g, "");
+  if (!t) return NaN;
+  if (t.includes(",")) return Number(t.replace(/\./g, "").replace(",", "."));
+  return /^\d*\.\d{1,2}$/.test(t) ? Number(t) : Number(t.replace(/\./g, ""));
+}
+
+/** Formats a stored number for an amount input, e.g. 1200.5 → "1200,50". */
+export function amountInput(n: number | string | null | undefined) {
+  if (n == null || n === "") return "";
+  const v = Number(n);
+  return Number.isFinite(v) ? v.toFixed(2).replace(".", ",") : "";
+}
+
 export const todayISO = () => format(new Date(), "yyyy-MM-dd");
 
 export type PeriodKey = "month" | "3months" | "year" | "all" | "custom";
@@ -23,7 +47,10 @@ export const PERIOD_LABELS: Record<PeriodKey, string> = {
 };
 
 /** Returns inclusive ISO date bounds; undefined bound = open. */
-export function periodRange(p: Period, now = new Date()): { from?: string | undefined; to?: string | undefined } {
+export function periodRange(
+  p: Period,
+  now = new Date(),
+): { from?: string | undefined; to?: string | undefined } {
   const iso = (d: Date) => format(d, "yyyy-MM-dd");
   switch (p.key) {
     case "month":

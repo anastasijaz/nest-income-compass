@@ -25,15 +25,27 @@ export function ImagePicker({
         onClick={() => ref.current?.click()}
         className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-input bg-card text-muted-foreground"
       >
-        {value ? <Photo path={value} alt="" className="h-full w-full" /> : <Camera className="h-6 w-6" />}
+        {value ? (
+          <Photo path={value} alt="" className="h-full w-full" />
+        ) : (
+          <Camera className="h-6 w-6" />
+        )}
         {busy && <span className="absolute inset-0 animate-pulse bg-background/70" />}
       </button>
       <div className="flex flex-col gap-1 text-sm">
-        <button type="button" className="text-left font-medium" onClick={() => ref.current?.click()}>
+        <button
+          type="button"
+          className="text-left font-medium"
+          onClick={() => ref.current?.click()}
+        >
           {value ? "Change photo" : label}
         </button>
         {value && (
-          <button type="button" className="flex items-center gap-1 text-left text-muted-foreground" onClick={() => onChange(null)}>
+          <button
+            type="button"
+            className="flex items-center gap-1 text-left text-muted-foreground"
+            onClick={() => onChange(null)}
+          >
             <X className="h-3.5 w-3.5" /> Remove
           </button>
         )}

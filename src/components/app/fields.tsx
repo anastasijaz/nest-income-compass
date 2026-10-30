@@ -2,7 +2,15 @@ import { type ReactNode, type SelectHTMLAttributes } from "react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-export function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
+export function Field({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div className={cn("space-y-1.5", className)}>
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
@@ -15,7 +23,9 @@ export function NativeSelect({
   options,
   className,
   ...props
-}: SelectHTMLAttributes<HTMLSelectElement> & { options: Record<string, string> | [string, string][] }) {
+}: SelectHTMLAttributes<HTMLSelectElement> & {
+  options: Record<string, string> | [string, string][];
+}) {
   const entries = Array.isArray(options) ? options : Object.entries(options);
   return (
     <select

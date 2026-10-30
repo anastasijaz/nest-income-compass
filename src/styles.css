@@ -58,6 +58,7 @@
 }
 
 :root {
+  --nav-h: 4rem;
   --radius: 0.875rem;
   --background: #f2f2f2;
   --foreground: #173a42;
@@ -97,7 +98,8 @@
   --sidebar-accent-foreground: oklch(0.24 0.012 70);
   --sidebar-border: oklch(0.91 0.006 85);
   --sidebar-ring: oklch(0.6 0.012 70);
-  --shadow-card-value: 0 1px 2px oklch(0.2 0.01 70 / 0.04), 0 8px 24px -12px oklch(0.2 0.01 70 / 0.12);
+  --shadow-card-value:
+    0 1px 2px oklch(0.2 0.01 70 / 0.04), 0 8px 24px -12px oklch(0.2 0.01 70 / 0.12);
   --shadow-fab-value: 0 12px 30px -8px oklch(0.2 0.01 70 / 0.45);
 }
 
@@ -105,13 +107,44 @@
   * {
     border-color: var(--color-border);
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
+    /* viewport-fit=cover: keep content clear of the notch and rounded corners. */
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    overscroll-behavior-x: none;
   }
-  h1, h2, h3 {
+  /* No double-tap zoom delay on controls. */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  label,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"] {
+    touch-action: manipulation;
+  }
+  /* Inputs below 16px make iOS zoom the page on focus. */
+  @media (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: max(16px, 1em);
+    }
+  }
+  h1,
+  h2,
+  h3 {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }

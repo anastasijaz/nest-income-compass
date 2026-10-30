@@ -25,13 +25,18 @@ export const transactionsQuery = queryOptions({
   queryKey: ["transactions"],
   queryFn: () =>
     run<Transaction[]>(
-      supabase.from("transactions").select("*").order("date", { ascending: false }).order("created_at", { ascending: false }),
+      supabase
+        .from("transactions")
+        .select("*")
+        .order("date", { ascending: false })
+        .order("created_at", { ascending: false }),
     ),
 });
 
 export const fixesQuery = queryOptions({
   queryKey: ["fixes"],
-  queryFn: () => run<Fix[]>(supabase.from("fixes").select("*").order("created_at", { ascending: false })),
+  queryFn: () =>
+    run<Fix[]>(supabase.from("fixes").select("*").order("created_at", { ascending: false })),
 });
 
 export const taxesQuery = queryOptions({
@@ -57,7 +62,8 @@ export const visitsQuery = queryOptions({
 export type RecurringRent = Tables<"recurring_rents">;
 export const recurringRentsQuery = queryOptions({
   queryKey: ["recurring_rents"],
-  queryFn: () => run<RecurringRent[]>(supabase.from("recurring_rents").select("*").order("created_at")),
+  queryFn: () =>
+    run<RecurringRent[]>(supabase.from("recurring_rents").select("*").order("created_at")),
 });
 
 export const meQuery = queryOptions({

@@ -1,4 +1,5 @@
 # Property finances and task reminders
+
 - [x] Add Scan receipt to Transactions and Taxes; retain tax photo and document date.
 - [x] Separate Finance and Fixes on each property.
 - [x] Verify scanning and saving through the signed-in pages.

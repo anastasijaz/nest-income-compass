@@ -1,21 +1,23 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil, Plus, UserRound } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormSheet } from "@/components/app/FormSheet";
 import { Field, inputLg } from "@/components/app/fields";
-import { formatEUR as eur } from "@/lib/finance";
+import { amountInput, formatEUR as eur, parseAmount } from "@/lib/finance";
 import { recurringRentsQuery, useRefresh, type RecurringRent } from "@/lib/queries";
 
 export function TenantRents({ propertyId, tenants }: { propertyId: string; tenants: number }) {
   const q = useQuery(recurringRentsQuery);
   const [editing, setEditing] = useState<RecurringRent | "new" | null>(null);
   if (tenants <= 0) return null;
-  const rows = (q.data ?? []).filter((r) => r.property_id === propertyId && r.active && r.tenant_name);
+  const rows = (q.data ?? []).filter(
+    (r) => r.property_id === propertyId && r.active && r.tenant_name,
+  );
   const total = rows.reduce((s, r) => s + Number(r.amount), 0);
 
   return (
@@ -32,16 +34,24 @@ export function TenantRents({ propertyId, tenants }: { propertyId: string; tenan
         </Button>
       </div>
       {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Add each tenant's monthly rent — it's added as income automatically every month.</p>
+        <p className="text-sm text-muted-foreground">
+          Add each tenant's monthly rent — it's added as income automatically every month.
+        </p>
       ) : (
         <ul className="divide-y">
           {rows.map((r) => (
             <li key={r.id}>
-              <button className="flex w-full items-center gap-3 py-3 text-left" onClick={() => setEditing(r)}>
+              <button
+                className="flex w-full items-center gap-3 py-3 text-left"
+                onClick={() => setEditing(r)}
+              >
                 <UserRound className="h-5 w-5 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{r.tenant_name}</p>
-                  <p className="text-xs text-muted-foreground">Monthly on day {r.day_of_month} · since {format(new Date(r.start_date), "d MMM yyyy")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Monthly on day {r.day_of_month} · since{" "}
+                    {format(parseISO(r.start_date), "d MMM yyyy")}
+                  </p>
                 </div>
                 <span className="font-medium tabular-nums">{eur(Number(r.amount))}</span>
                 <Pencil className="h-4 w-4 text-muted-foreground" />
@@ -50,20 +60,34 @@ export function TenantRents({ propertyId, tenants }: { propertyId: string; tenan
           ))}
         </ul>
       )}
-      {editing && <TenantSheet propertyId={propertyId} rent={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
+      {editing && (
+        <TenantSheet
+          propertyId={propertyId}
+          rent={editing === "new" ? null : editing}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </section>
   );
 }
 
-function TenantSheet({ propertyId, rent, onClose }: { propertyId: string; rent: RecurringRent | null; onClose: () => void }) {
+function TenantSheet({
+  propertyId,
+  rent,
+  onClose,
+}: {
+  propertyId: string;
+  rent: RecurringRent | null;
+  onClose: () => void;
+}) {
   const refresh = useRefresh();
   const [name, setName] = useState(rent?.tenant_name ?? "");
-  const [amount, setAmount] = useState(rent ? String(rent.amount).replace(".", ",") : "");
+  const [amount, setAmount] = useState(amountInput(rent?.amount));
   const [start, setStart] = useState(rent?.start_date ?? format(new Date(), "yyyy-MM-dd"));
   const [busy, setBusy] = useState(false);
 
   async function save() {
-    const value = Number(amount.replace(/\./g, "").replace(",", "."));
+    const value = parseAmount(amount);
     if (!name.trim()) return void toast.error("Enter the tenant's name");
     if (!(value > 0)) return void toast.error("Enter the monthly rent");
     setBusy(true);
@@ -89,8 +113,12 @@ function TenantSheet({ propertyId, rent, onClose }: { propertyId: string; rent: 
   }
 
   async function stop() {
-    if (!rent || !confirm("Stop adding this tenant's rent from now on? Past rent stays recorded.")) return;
-    const { error } = await supabase.from("recurring_rents").update({ active: false }).eq("id", rent.id);
+    if (!rent || !confirm("Stop adding this tenant's rent from now on? Past rent stays recorded."))
+      return;
+    const { error } = await supabase
+      .from("recurring_rents")
+      .update({ active: false })
+      .eq("id", rent.id);
     if (error) return void toast.error(error.message);
     refresh();
     onClose();
@@ -103,11 +131,41 @@ function TenantSheet({ propertyId, rent, onClose }: { propertyId: string; rent: 
       title={rent ? "Edit tenant rent" : "Add tenant rent"}
       onSubmit={save}
       busy={busy}
-      extraActions={rent ? <Button type="button" variant="outline" size="lg" className="h-12 rounded-xl" onClick={stop}>Stop rent</Button> : undefined}
+      extraActions={
+        rent ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-12 rounded-xl"
+            onClick={stop}
+          >
+            Stop rent
+          </Button>
+        ) : undefined
+      }
     >
-      <Field label="Tenant name"><Input className={inputLg} value={name} onChange={(e) => setName(e.target.value)} /></Field>
-      <Field label="Monthly rent (Miete, €)"><Input className={inputLg} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
-      {!rent && <Field label="First payment date"><Input className={inputLg} type="date" value={start} onChange={(e) => setStart(e.target.value)} /></Field>}
+      <Field label="Tenant name">
+        <Input className={inputLg} value={name} onChange={(e) => setName(e.target.value)} />
+      </Field>
+      <Field label="Monthly rent (Miete, €)">
+        <Input
+          className={inputLg}
+          inputMode="decimal"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+      </Field>
+      {!rent && (
+        <Field label="First payment date">
+          <Input
+            className={inputLg}
+            type="date"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+          />
+        </Field>
+      )}
     </FormSheet>
   );
 }

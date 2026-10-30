@@ -1,4 +1,5 @@
 <!-- LOVABLE:BEGIN -->
+
 > [!IMPORTANT]
 > This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
 > published git history — force pushing, or rebasing/amending/squashing commits
@@ -7,6 +8,7 @@
 >
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
+
 <!-- LOVABLE:END -->
 
 - Data access goes straight from the browser Supabase client with RLS scoped to the caller's shared group (`workspace_id = my_workspace_id()`; each user belongs to exactly one group, joined by invite code); only AI receipt parsing runs server-side (`src/lib/receipt.functions.ts`) because it needs the gateway key.

@@ -36,7 +36,11 @@ function AuthPage() {
       if (error) return void toast.error(error.message);
       navigate({ to: "/dashboard" });
     } else {
-      const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: window.location.origin },
+      });
       setBusy(false);
       if (error) return void toast.error(error.message);
       if (data.session) navigate({ to: "/dashboard" });
@@ -52,16 +56,27 @@ function AuthPage() {
       <div className="flex items-start justify-center px-6 py-10 md:items-center">
         <div className="w-full max-w-sm">
           <h1 className="text-3xl font-semibold">Rentwise</h1>
-          <p className="mt-2 text-muted-foreground">See what each rental earns — and whether it covers its costs.</p>
+          <p className="mt-2 text-muted-foreground">
+            See what each rental earns — and whether it covers its costs.
+          </p>
           {sent ? (
             <div className="mt-8 rounded-2xl border bg-card p-5">
               <p className="font-medium">Check your email</p>
-              <p className="mt-1 text-sm text-muted-foreground">We sent a confirmation link to {email}. Open it to finish signing up.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                We sent a confirmation link to {email}. Open it to finish signing up.
+              </p>
             </div>
           ) : (
             <form onSubmit={submit} className="mt-8 space-y-4">
               <Field label="Email">
-                <Input className={inputLg} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Input
+                  className={inputLg}
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </Field>
               <Field label="Password">
                 <Input
@@ -74,10 +89,19 @@ function AuthPage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </Field>
-              <Button type="submit" size="lg" className="h-12 w-full rounded-xl text-base" disabled={busy}>
+              <Button
+                type="submit"
+                size="lg"
+                className="h-12 w-full rounded-xl text-base"
+                disabled={busy}
+              >
                 {busy ? "Please wait…" : mode === "in" ? "Sign in" : "Create account"}
               </Button>
-              <button type="button" className="w-full py-2 text-sm text-muted-foreground" onClick={() => setMode(mode === "in" ? "up" : "in")}>
+              <button
+                type="button"
+                className="w-full py-2 text-sm text-muted-foreground"
+                onClick={() => setMode(mode === "in" ? "up" : "in")}
+              >
                 {mode === "in" ? "New here? Create an account" : "Already have an account? Sign in"}
               </button>
             </form>

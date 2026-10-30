@@ -11,8 +11,20 @@ import { Switch } from "@/components/ui/switch";
 import { FormSheet } from "./FormSheet";
 import { Field, NativeSelect, inputLg } from "./fields";
 import { ImagePicker } from "./ImagePicker";
-import { COST_CATEGORIES, INCOME_CATEGORIES, todayISO } from "@/lib/finance";
-import { meQuery, membersQuery, propertiesQuery, useRefresh, type Transaction } from "@/lib/queries";
+import {
+  amountInput,
+  COST_CATEGORIES,
+  INCOME_CATEGORIES,
+  parseAmount,
+  todayISO,
+} from "@/lib/finance";
+import {
+  meQuery,
+  membersQuery,
+  propertiesQuery,
+  useRefresh,
+  type Transaction,
+} from "@/lib/queries";
 import { blobToDataUrl, compressImage, uploadImage } from "@/lib/files";
 import { parseReceipt } from "@/lib/receipt.functions";
 
@@ -24,7 +36,7 @@ export function TransactionSheet({
   kind,
   propertyId,
   txn,
-  startScan,
+  scanFile,
   fixedExpense = false,
 }: {
   open: boolean;
@@ -32,7 +44,8 @@ export function TransactionSheet({
   kind: TxnKind;
   propertyId?: string | undefined;
   txn?: Transaction | undefined;
-  startScan?: boolean | undefined;
+  /** An image the user already picked; it is read as soon as the sheet opens. */
+  scanFile?: File | null | undefined;
   fixedExpense?: boolean;
 }) {
   const refresh = useRefresh();
@@ -42,6 +55,7 @@ export function TransactionSheet({
   const { data: me = "" } = useQuery(meQuery);
   const scanRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const scannedRef = useRef<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [suggested, setSuggested] = useState(false);
@@ -63,7 +77,7 @@ export function TransactionSheet({
     setSuggested(false);
     setF({
       property_id: txn?.property_id ?? propertyId ?? properties[0]?.id ?? "",
-      amount: txn ? String(txn.amount).replace(".", ",") : "",
+      amount: amountInput(txn?.amount),
       date: txn?.date ?? todayISO(),
       category: txn?.category ?? (kind === "income" ? "rent" : fixedExpense ? "energy" : "repairs"),
       vendor: txn?.vendor ?? "",
@@ -73,15 +87,22 @@ export function TransactionSheet({
       paid_by: txn ? (txn.paid_by ?? "") : me,
       is_fixed_expense: txn?.is_fixed_expense ?? fixedExpense,
     });
-    if (startScan) setTimeout(() => scanRef.current?.click(), 150);
+    // The effect re-runs when e.g. `me` loads; read each picked file only once.
+    if (scanFile && scannedRef.current !== scanFile) {
+      scannedRef.current = scanFile;
+      void onScan(scanFile);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, txn, kind, propertyId, me, fixedExpense]);
+  }, [open, txn, kind, propertyId, me, fixedExpense, scanFile]);
 
   async function onScan(file: File) {
     setScanning(true);
     try {
       const blob = await compressImage(file);
-      const [path, dataUrl] = await Promise.all([uploadImage(blob, "receipts"), blobToDataUrl(blob)]);
+      const [path, dataUrl] = await Promise.all([
+        uploadImage(blob, "receipts"),
+        blobToDataUrl(blob),
+      ]);
       setF((p) => ({ ...p, receipt_path: path }));
       const r = await scan({ data: { image: dataUrl } });
       setF((p) => ({
@@ -89,12 +110,18 @@ export function TransactionSheet({
         receipt_path: path,
         vendor: r.vendor ?? p.vendor,
         date: r.date ?? p.date,
-        amount: r.total != null && (!r.currency || r.currency === "EUR") ? r.total.toFixed(2).replace(".", ",") : p.amount,
+        amount:
+          r.total != null && (!r.currency || r.currency === "EUR")
+            ? amountInput(r.total)
+            : p.amount,
         category: r.category || p.category,
         note: r.purpose ?? p.note,
       }));
       setSuggested(true);
-      if (r.currency && r.currency !== "EUR") toast.warning(`Receipt amount: ${r.total ?? "unknown"} ${r.currency}. Enter the EUR amount before saving.`);
+      if (r.currency && r.currency !== "EUR")
+        toast.warning(
+          `Receipt amount: ${r.total ?? "unknown"} ${r.currency}. Enter the EUR amount before saving.`,
+        );
       else toast.success("Receipt read — please check the details");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't read the receipt");
@@ -104,7 +131,7 @@ export function TransactionSheet({
   }
 
   async function save() {
-    const amount = Number(f.amount.replace(/\./g, "").replace(",", "."));
+    const amount = parseAmount(f.amount);
     if (!f.property_id) return void toast.error("Choose a property");
     if (!(amount > 0)) return void toast.error("Enter an amount");
     setBusy(true);
@@ -145,7 +172,10 @@ export function TransactionSheet({
 
   async function remove() {
     if (!txn || !confirm("Delete this entry?")) return;
-    if (txn.recurring_id && confirm("Also stop this recurring rent from being added in future months?")) {
+    if (
+      txn.recurring_id &&
+      confirm("Also stop this recurring rent from being added in future months?")
+    ) {
       await supabase.from("recurring_rents").update({ active: false }).eq("id", txn.recurring_id);
     }
     const { error } = await supabase.from("transactions").delete().eq("id", txn.id);
@@ -164,7 +194,14 @@ export function TransactionSheet({
       busy={busy || scanning}
       extraActions={
         txn && (
-          <Button type="button" variant="outline" size="lg" className="h-12 rounded-xl" onClick={remove} aria-label="Delete">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-12 rounded-xl"
+            onClick={remove}
+            aria-label="Delete"
+          >
             <Trash2 className="h-5 w-5" />
           </Button>
         )
@@ -172,12 +209,27 @@ export function TransactionSheet({
     >
       {isCost && (
         <>
-          <Button type="button" variant="outline" className="h-12 w-full rounded-xl" onClick={() => cameraRef.current?.click()} disabled={scanning}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 w-full rounded-xl"
+            onClick={() => cameraRef.current?.click()}
+            disabled={scanning}
+          >
             <Camera className="h-5 w-5" /> Take photo
           </Button>
-          <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => {
-            const file = e.target.files?.[0]; e.target.value = ""; if (file) void onScan(file);
-          }} />
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void onScan(file);
+            }}
+          />
           <Button
             type="button"
             variant="secondary"
@@ -217,24 +269,48 @@ export function TransactionSheet({
       )}
       <div className="grid grid-cols-2 gap-3">
         <Field label="Amount (€)">
-          <Input className={inputLg} inputMode="decimal" placeholder="0,00" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} autoFocus={!startScan} />
+          <Input
+            className={inputLg}
+            inputMode="decimal"
+            placeholder="0,00"
+            value={f.amount}
+            onChange={(e) => setF({ ...f, amount: e.target.value })}
+            autoFocus={!scanFile}
+          />
         </Field>
         <Field label="Date">
-          <Input className={inputLg} type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} />
+          <Input
+            className={inputLg}
+            type="date"
+            value={f.date}
+            onChange={(e) => setF({ ...f, date: e.target.value })}
+          />
         </Field>
       </div>
       <Field label="Category">
-        <NativeSelect options={isCost ? COST_CATEGORIES : INCOME_CATEGORIES} value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })} />
+        <NativeSelect
+          options={isCost ? COST_CATEGORIES : INCOME_CATEGORIES}
+          value={f.category}
+          onChange={(e) => setF({ ...f, category: e.target.value })}
+        />
       </Field>
       {isCost && (
         <Field label="Vendor">
-          <Input className={inputLg} value={f.vendor} onChange={(e) => setF({ ...f, vendor: e.target.value })} placeholder="Who did you pay?" />
+          <Input
+            className={inputLg}
+            value={f.vendor}
+            onChange={(e) => setF({ ...f, vendor: e.target.value })}
+            placeholder="Who did you pay?"
+          />
         </Field>
       )}
       {isCost && (
         <Field label="Paid by">
           <NativeSelect
-            options={[["", "Not set"], ...members.map((m) => [m.user_id, m.display_name || "Member"] as [string, string])]}
+            options={[
+              ["", "Not set"],
+              ...members.map((m) => [m.user_id, m.display_name || "Member"] as [string, string]),
+            ]}
             value={f.paid_by}
             onChange={(e) => setF({ ...f, paid_by: e.target.value })}
           />
@@ -243,24 +319,39 @@ export function TransactionSheet({
       {isCost && (
         <label className="flex items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3">
           <span className="font-medium">Fixed expense</span>
-          <Switch checked={f.is_fixed_expense} onCheckedChange={(v) => setF({ ...f, is_fixed_expense: v })} />
+          <Switch
+            checked={f.is_fixed_expense}
+            onCheckedChange={(v) => setF({ ...f, is_fixed_expense: v })}
+          />
         </label>
       )}
       <Field label={isCost ? "Purpose / note" : "Note"}>
-        <Textarea className="bg-card text-base" rows={2} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} />
+        <Textarea
+          className="bg-card text-base"
+          rows={2}
+          value={f.note}
+          onChange={(e) => setF({ ...f, note: e.target.value })}
+        />
       </Field>
       {!txn && kind === "income" && f.category === "rent" && (
         <label className="flex items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3">
           <span>
             <span className="block font-medium">Repeat every month</span>
-            <span className="block text-sm text-muted-foreground">Rent is added automatically each month from this date</span>
+            <span className="block text-sm text-muted-foreground">
+              Rent is added automatically each month from this date
+            </span>
           </span>
           <Switch checked={f.recurring} onCheckedChange={(v) => setF({ ...f, recurring: v })} />
         </label>
       )}
       {isCost && (
         <Field label="Receipt">
-          <ImagePicker value={f.receipt_path} onChange={(p) => setF({ ...f, receipt_path: p })} folder="receipts" label="Attach receipt" />
+          <ImagePicker
+            value={f.receipt_path}
+            onChange={(p) => setF({ ...f, receipt_path: p })}
+            folder="receipts"
+            label="Attach receipt"
+          />
         </Field>
       )}
     </FormSheet>

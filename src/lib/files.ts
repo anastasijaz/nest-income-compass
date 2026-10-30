@@ -17,6 +17,28 @@ export async function compressImage(file: File, max = 1600): Promise<Blob> {
   }
 }
 
+/**
+ * Opens the image picker right away. Must be called directly from a tap handler:
+ * iOS Safari ignores file-input clicks that happen after a timeout or render.
+ */
+export function pickImage({ camera = false } = {}): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    if (camera) input.capture = "environment";
+    input.hidden = true;
+    const done = (file: File | null) => {
+      input.remove();
+      resolve(file);
+    };
+    input.addEventListener("change", () => done(input.files?.[0] ?? null), { once: true });
+    input.addEventListener("cancel", () => done(null), { once: true });
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
 export function blobToDataUrl(b: Blob): Promise<string> {
   return new Promise((res, rej) => {
     const r = new FileReader();

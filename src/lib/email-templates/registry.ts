@@ -1,13 +1,15 @@
-import type { ComponentType } from 'react'
-import { template as taskVisitReminder } from './task-visit-reminder'
+import type { ComponentType } from "react";
+import { template as taskVisitReminder } from "./task-visit-reminder";
 
 export interface TemplateEntry {
-  component: ComponentType<any>
-  subject: string | ((data: Record<string, any>) => string)
-  displayName?: string
-  previewData?: Record<string, any>
+  // Each template has its own props type; createElement callers pass the matching data.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  component: ComponentType<any>;
+  subject: string | ((data: Record<string, unknown>) => string);
+  displayName?: string;
+  previewData?: Record<string, unknown>;
   /** Fixed recipient — overrides caller-provided recipientEmail when set. */
-  to?: string
+  to?: string;
 }
 
 /**
@@ -19,5 +21,5 @@ export interface TemplateEntry {
  *   // then add to TEMPLATES: 'welcome': welcomeTemplate
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
-  'task-visit-reminder': taskVisitReminder,
-}
+  "task-visit-reminder": taskVisitReminder,
+};

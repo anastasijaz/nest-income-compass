@@ -28,8 +28,20 @@ describe("property filters", () => {
   it("splits by tenants, counting null as no tenants", () => {
     expect(ids({ ...EMPTY_FILTER, tenants: "occupied" })).toEqual(["berlin", "munich", "unknown"]);
     expect(ids({ ...EMPTY_FILTER, tenants: "empty" })).toEqual(["novi-sad"]);
-    expect(filterProperties([{ tenants: null, country: "DE" }], { ...EMPTY_FILTER, tenants: "empty" }, () => 0)).toHaveLength(1);
-    expect(filterProperties([{ tenants: null, country: "DE" }], { ...EMPTY_FILTER, tenants: "occupied" }, () => 0)).toHaveLength(0);
+    expect(
+      filterProperties(
+        [{ tenants: null, country: "DE" }],
+        { ...EMPTY_FILTER, tenants: "empty" },
+        () => 0,
+      ),
+    ).toHaveLength(1);
+    expect(
+      filterProperties(
+        [{ tenants: null, country: "DE" }],
+        { ...EMPTY_FILTER, tenants: "occupied" },
+        () => 0,
+      ),
+    ).toHaveLength(0);
   });
   it("splits by money using strict net: break-even is neither", () => {
     expect(ids({ ...EMPTY_FILTER, money: "profit" })).toEqual(["berlin", "unknown"]);
@@ -43,7 +55,10 @@ describe("property filters", () => {
     expect(ids({ ...EMPTY_FILTER, country: COUNTRY_NONE })).toEqual(["unknown"]);
   });
   it("combines filters", () => {
-    expect(ids({ tenants: "occupied", money: "profit", country: COUNTRY_ANY })).toEqual(["berlin", "unknown"]);
+    expect(ids({ tenants: "occupied", money: "profit", country: COUNTRY_ANY })).toEqual([
+      "berlin",
+      "unknown",
+    ]);
     expect(ids({ tenants: "occupied", money: "profit", country: "DE" })).toEqual(["berlin"]);
     expect(ids({ tenants: "empty", money: "profit", country: "DE" })).toEqual([]);
   });

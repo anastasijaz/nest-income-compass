@@ -42,7 +42,9 @@ export function filterProperties<T extends { tenants: number | null; country: st
 }
 
 /** Country select options: only countries actually in use, plus "no country set" when some are missing one. */
-export function countryFilterOptions<T extends { country: string | null }>(properties: T[]): [string, string][] {
+export function countryFilterOptions<T extends { country: string | null }>(
+  properties: T[],
+): [string, string][] {
   const seen = new Set<string>();
   let missing = false;
   for (const p of properties) {
